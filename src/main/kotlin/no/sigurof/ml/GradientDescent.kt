@@ -1,4 +1,4 @@
-package org.example
+package no.sigurof.ml
 
 import kotlin.math.absoluteValue
 import kotlin.math.pow

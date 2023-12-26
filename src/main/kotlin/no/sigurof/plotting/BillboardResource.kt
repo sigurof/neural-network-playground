@@ -1,4 +1,4 @@
-package org.example
+package no.sigurof.plotting
 
 import org.lwjgl.opengl.GL11
 import org.lwjgl.opengl.GL30

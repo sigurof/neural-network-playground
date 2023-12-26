@@ -1,5 +1,7 @@
-package org.example
+package no.sigurof.no.sigurof.plotting
 
+import no.sigurof.plotting.Shader
+import no.sigurof.plotting.ShaderManager
 import org.joml.Vector2f
 
 const val CENTER = "center"
