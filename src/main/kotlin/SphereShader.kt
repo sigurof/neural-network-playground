@@ -4,6 +4,7 @@ import org.joml.Vector2f
 
 const val CENTER = "center"
 const val RADIUS = "radius"
+const val ASPECT_RATIO = "aspectRatio"
 
 class SphereShader : Shader(
     vtxSource = "/shader/simple/vertex.shader",
@@ -11,7 +12,8 @@ class SphereShader : Shader(
     attributes = emptyList(),
     uniforms = listOf(
         CENTER,
-        RADIUS
+        RADIUS,
+        ASPECT_RATIO
     )
 ) {
     fun loadCenter(point: Vector2f) {
@@ -20,5 +22,9 @@ class SphereShader : Shader(
 
     fun loadRadius(fl: Float) {
         ShaderManager.loadFloat(locations.getValue(RADIUS), fl)
+    }
+
+    fun loadAspectRatio(fl: Float) {
+        ShaderManager.loadFloat(locations.getValue(ASPECT_RATIO), fl)
     }
 }

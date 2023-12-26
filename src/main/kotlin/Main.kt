@@ -68,12 +68,13 @@ fun main() {
             clearScreen(0f, 0f, 0f, 0f)
             shader.use()
             shader.loadRadius(0.1f)
+            shader.loadAspectRatio(WIDTH.toFloat() / HEIGHT.toFloat())
+            billboard.activate()
             for (point in points) {
-                billboard.activate()
                 shader.loadCenter(point)
                 billboard.render()
-                billboard.deactivate()
             }
+            billboard.deactivate()
         }
         ShaderManager.cleanUp()
     }
