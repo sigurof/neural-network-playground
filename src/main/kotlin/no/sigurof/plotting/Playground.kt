@@ -7,25 +7,6 @@ import org.joml.Vector4f
 import org.lwjgl.opengl.GL20
 import org.lwjgl.opengl.GL30
 
-private var lastUpdate: Long = System.currentTimeMillis()
-
-private fun clearScreen(background: Vector4f) {
-    GL30.glClear(GL30.GL_COLOR_BUFFER_BIT or GL30.GL_DEPTH_BUFFER_BIT)
-    GL30.glClearColor(background.x, background.y, background.z, background.w)
-}
-
-private var FPS = 120
-
-private fun resizeWindow(width: Int, height: Int) {
-    WIDTH = width
-    HEIGHT = height
-    GL20.glViewport(0, 0, WIDTH, HEIGHT)
-}
-
-private fun windowResizeCallback(w: Long, width: Int, height: Int) {
-    resizeWindow(width, height)
-}
-
 private fun clearScreen(x: Float, y: Float, z: Float, w: Float) {
     GL30.glClearColor(x, y, z, w)
     GL30.glClear(GL30.GL_COLOR_BUFFER_BIT or GL30.GL_DEPTH_BUFFER_BIT)
