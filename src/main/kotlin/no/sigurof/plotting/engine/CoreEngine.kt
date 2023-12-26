@@ -13,8 +13,8 @@ import org.lwjgl.opengl.GL30
 
 object CoreEngine {
 
-    private fun clearScreen(x: Float, y: Float, z: Float, w: Float) {
-        GL30.glClearColor(x, y, z, w)
+    fun setBackgroundColor(color: Vector4f) {
+        GL30.glClearColor(color.x, color.y, color.z, color.w)
         GL30.glClear(GL30.GL_COLOR_BUFFER_BIT or GL30.GL_DEPTH_BUFFER_BIT)
     }
 
@@ -24,7 +24,7 @@ object CoreEngine {
             val shader = SphereShader()
             val billboard: BillboardResource = BillboardManager.getBillboardResource()
             DisplayManager.eachFrameDo {
-                clearScreen(background.x, background.y, background.z, background.w)
+                setBackgroundColor(background)
                 shader.use()
                 shader.loadAspectRatio(WIDTH.toFloat() / HEIGHT.toFloat())
                 billboard.activate()
@@ -39,6 +39,24 @@ object CoreEngine {
             ShaderManager.cleanUp()
         }
 
+    }
+
+    fun directShaderAccess(function: CoreEngine.() -> Unit) {
+        DisplayManager.FPS = 60
+        DisplayManager.withWindowOpen { window ->
+            val shader = SphereShader()
+            val billboard: BillboardResource = BillboardManager.getBillboardResource()
+            DisplayManager.eachFrameDo {
+                setBackgroundColor(Vector4f(0.3f, 0.3f, 0.3f, 1f))
+                function.invoke(this)
+                shader.use()
+                shader.loadAspectRatio(WIDTH.toFloat() / HEIGHT.toFloat())
+                billboard.activate()
+
+                billboard.deactivate()
+            }
+            ShaderManager.cleanUp()
+        }
     }
 
 }

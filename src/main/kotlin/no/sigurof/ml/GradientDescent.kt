@@ -45,12 +45,12 @@ data class Vector(
 }
 
 fun gradientDescent(n: Int, function: (coord: DoubleArray) -> Double): DoubleArray {
-    val alpha = 0.1
-    var startCoord = DoubleArray(n) { 0.4 }
+    val alpha = 0.01
+    var startCoord = DoubleArray(n) { i -> Math.random() }
     val derivative = DoubleArray(n) { 10.0 }
     val delta = 0.001
     var steps = 0
-    val d = 5*1e-2
+    val d = 1e-2
     while (derivative.length() > d) {
         println("Step $steps, derivative = ${derivative.length()}")
         val functionValue = function.invoke(startCoord)

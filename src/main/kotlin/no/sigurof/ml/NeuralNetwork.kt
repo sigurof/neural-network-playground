@@ -13,7 +13,7 @@ private fun DoubleArray.concat(i: Int): DoubleArray {
     return DoubleArray(this.size + i) { if (it < this.size) this[it] else 1.0 }
 }
 
-class NeuralNetwork(private val weights: List<Matrix>) {
+class NeuralNetwork(val weights: List<Matrix>) {
 
     constructor() : this(
         listOf<Int>(

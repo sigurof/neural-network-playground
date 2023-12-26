@@ -11,7 +11,7 @@ abstract class Shader(
 ) {
 
     private val program: Int = ShaderManager.compileProgram(vtxSource, frgSource, attributes)
-    val locations = uniforms.map { it to ShaderManager.getUniformLocation(it, program) }.toMap()
+    val locations: Map<String, Int> = uniforms.map { it to ShaderManager.getUniformLocation(it, program) }.toMap()
 
     fun cleanUp() {
         GL20.glUseProgram(0)
