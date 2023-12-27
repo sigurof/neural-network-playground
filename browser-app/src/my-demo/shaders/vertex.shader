@@ -2,16 +2,16 @@
 
 in vec4 aVertexPosition;
 
-
-//uniform mat4 uModelViewMatrix;
 uniform float aspect;
 
 uniform mat4 uProjectionMatrix;
 
 out vec3 position;
+out vec3 worldPosition;
 
 void main() {
     gl_Position = aVertexPosition;
-    gl_Position /= aspect;
+    worldPosition = gl_Position.xyz;
+    worldPosition.x *= aspect;
     position = gl_Position.xyz;
 }
