@@ -1,11 +1,11 @@
-package no.sigurof.no.sigurof.plotting.engine
+package no.sigurof.plotting.engine
 
 import DisplayManager
 import DisplayManager.Companion.HEIGHT
 import DisplayManager.Companion.WIDTH
-import no.sigurof.no.sigurof.plotting.BillboardManager
-import no.sigurof.no.sigurof.plotting.Circle
-import no.sigurof.no.sigurof.plotting.SphereShader
+import no.sigurof.plotting.BillboardManager
+import no.sigurof.plotting.Circle
+import no.sigurof.plotting.SphereShader
 import no.sigurof.plotting.BillboardResource
 import no.sigurof.plotting.ShaderManager
 import org.joml.Vector4f

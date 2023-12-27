@@ -1,4 +1,4 @@
-package no.sigurof.no.sigurof.plotting
+package no.sigurof.plotting
 
 import no.sigurof.plotting.Shader
 import no.sigurof.plotting.ShaderManager

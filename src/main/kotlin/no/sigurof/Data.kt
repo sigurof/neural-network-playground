@@ -1,8 +1,8 @@
-package no.sigurof.no.sigurof
+package no.sigurof
 
-import no.sigurof.no.sigurof.plotting.BLUE
-import no.sigurof.no.sigurof.plotting.Circle
-import no.sigurof.no.sigurof.plotting.RED
+import no.sigurof.plotting.BLUE
+import no.sigurof.plotting.Circle
+import no.sigurof.plotting.RED
 import org.joml.Vector2f
 
 

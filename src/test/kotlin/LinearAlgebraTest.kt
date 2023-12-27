@@ -5,7 +5,7 @@ import io.kotest.matchers.throwable.shouldHaveMessage
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.matrixOfRows
 import no.sigurof.ml.matrixRow
-import no.sigurof.no.sigurof.ml.visualization.toJomlMatrix
+import no.sigurof.ml.visualization.toJomlMatrix
 import org.joml.Vector3f
 
 

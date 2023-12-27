@@ -1,6 +1,6 @@
 package no.sigurof.ml
 
-import no.sigurof.no.sigurof.ml.PosVsColor
+import no.sigurof.ml.PosVsColor
 
 
 class NeuralNetworkBuilder(
