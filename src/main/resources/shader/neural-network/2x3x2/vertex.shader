@@ -5,8 +5,8 @@ uniform mat3 firstWeights;
 uniform mat4 secondWeights;
 
 out vec2 coord2d;
-out mat3 fragFirstWeights; // 3 by 3
-out mat4 fragSecondWeights; // 2 by 4
+out mat3 fragFirstWeights;
+out mat4 fragSecondWeights;
 
 
 vec2 whichVertex(){
