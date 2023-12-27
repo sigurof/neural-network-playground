@@ -4,25 +4,25 @@ import DisplayManager
 import DisplayManager.Companion.HEIGHT
 import DisplayManager.Companion.WIDTH
 import no.sigurof.ml.NeuralNetworkBuilder
-import no.sigurof.ml.XY
-import no.sigurof.ml.x
-import no.sigurof.ml.y
 import no.sigurof.ml.PosVsColor
+import no.sigurof.ml.XY
 import no.sigurof.ml.visualization.Network2x2Shader
 import no.sigurof.ml.visualization.Network2x3x2Shader
+import no.sigurof.ml.x
+import no.sigurof.ml.y
 import no.sigurof.plotting.BLUE
 import no.sigurof.plotting.BillboardManager
+import no.sigurof.plotting.BillboardResource
 import no.sigurof.plotting.Circle
 import no.sigurof.plotting.RED
+import no.sigurof.plotting.ShaderManager
 import no.sigurof.plotting.SphereShader
 import no.sigurof.plotting.engine.CoreEngine.setBackgroundColor
-import no.sigurof.randomlyDistributedPoints
-import no.sigurof.plotting.BillboardResource
-import no.sigurof.plotting.ShaderManager
 import org.joml.Vector2f
 import org.joml.Vector4f
 
 fun main() {
+    plot2x2Network()
     plot2x3x2Network();
 }
 

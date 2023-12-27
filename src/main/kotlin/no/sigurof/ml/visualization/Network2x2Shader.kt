@@ -6,7 +6,7 @@ import no.sigurof.plotting.ShaderManager
 import org.joml.Matrix3f
 
 const val ASPECT_RATIO = "aspectRatio"
-const val MATRIX = "uMatrix"
+const val MATRIX = "fragMatrix"
 
 class Network2x2Shader : Shader(
     vtxSource = "/shader/neural-network/2x2/vertex.shader",

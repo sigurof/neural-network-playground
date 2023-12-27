@@ -5,8 +5,6 @@ uniform mat3 firstWeights;
 uniform mat4 secondWeights;
 
 out vec2 coord2d;
-out mat3 fragFirstWeights;
-out mat4 fragSecondWeights;
 
 
 vec2 whichVertex(){
@@ -31,12 +29,5 @@ vec2 whichVertex(){
 void main(void){
     coord2d = whichVertex();
     gl_Position = vec4(coord2d, 0.0, 1.0);
-    mat3 mockMatrix = mat3(
-       0.9, 0.0, 0.0,
-       0.0, 0.9, 0.0,
-       0.0, 0.0, 0.9
-   );
-    fragFirstWeights = firstWeights;
-    fragSecondWeights = secondWeights;
     gl_Position.x /= aspectRatio;
 }
