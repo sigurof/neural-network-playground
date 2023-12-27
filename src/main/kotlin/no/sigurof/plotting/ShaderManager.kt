@@ -100,12 +100,14 @@ public object ShaderManager {
 
     fun loadMatrix(location: Int, matrix4f: Matrix4f) {
         matrix4f.get(matrixBuffer)
+        // Remember that OpenGL Matrices are expected to be column-major (transpose: false by default)
         GL20.glUniformMatrix4fv(location, false, matrixBuffer)
     }
 
     fun loadMatrix3x3(location: Int, matrix3x3: FloatArray) {
         val floatBuffer: FloatBuffer = MemoryUtil.memAllocFloat(9).put(matrix3x3).flip()
-        GL20.glUniformMatrix3fv(location, false, floatBuffer)
+        // Transposing the array before sending to OpenGL, so that I can use row-major matrix
+        GL20.glUniformMatrix3fv(location, true, floatBuffer)
         MemoryUtil.memFree(floatBuffer)
     }
 

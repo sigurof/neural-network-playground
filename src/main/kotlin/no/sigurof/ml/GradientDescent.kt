@@ -1,22 +1,8 @@
 package no.sigurof.ml
 
 import kotlin.math.absoluteValue
-import kotlin.math.pow
 import kotlin.math.sqrt
 
-fun testGradientDescent() {
-    val multiMin = gradientDescent(n = 5) { coord ->
-        // x1^2 + x2^2 + x3^2 + x4^2 + x5^2
-        var sum = 0.0
-        for (i in coord.indices) {
-            sum += coord[i].pow(2)
-        }
-        sum
-
-    }
-
-    println("multiMin = $multiMin")
-}
 
 data class Vector(
     val data: DoubleArray,
@@ -44,21 +30,23 @@ data class Vector(
 
 }
 
-fun gradientDescent(n: Int, function: (coord: DoubleArray) -> Double): DoubleArray {
-    val alpha = 0.01
+fun gradientDescent(n: Int, costFuncion: (coord: DoubleArray) -> Double): DoubleArray {
+    val learningRate = 3
     var startCoord = DoubleArray(n) { i -> Math.random() }
     val derivative = DoubleArray(n) { 10.0 }
-    val delta = 0.001
+    val delta = 0.0001
     var steps = 0
-    val d = 1e-2
+    val d = 0.001
+    var functionValue = costFuncion.invoke(startCoord)
     while (derivative.length() > d) {
-        println("Step $steps, derivative = ${derivative.length()}")
-        val functionValue = function.invoke(startCoord)
+        functionValue = costFuncion.invoke(startCoord)
+//        println("Step $steps, derivative = ${derivative.length()}, cost = $functionValue")
+        println("steps = $steps, coord: ${derivative.length()}, cost = $functionValue")
         val newCoord: DoubleArray = startCoord.copyOf()
         for (index in startCoord.indices) {
-            val functionValueIncr = function.invoke(startCoord.increment(index, delta))
+            val functionValueIncr = costFuncion.invoke(startCoord.increment(index, delta))
             derivative[index] = (functionValueIncr - functionValue) / delta
-            newCoord[index] -= alpha * derivative[index]
+            newCoord[index] -= learningRate * derivative[index]
         }
         startCoord = newCoord
         steps++;
