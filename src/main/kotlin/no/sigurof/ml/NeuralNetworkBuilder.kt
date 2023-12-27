@@ -1,7 +1,15 @@
 package no.sigurof.ml
 
-import no.sigurof.ml.PosVsColor
 
+open class Data<Value, Label>(
+    val value: Value,
+    val label: Label,
+)
+
+class PosVsColor(
+    val pos: XY,
+    val color: String,
+) : Data<XY, String>(pos, color)
 
 class NeuralNetworkBuilder(
     layers: List<Int>,
