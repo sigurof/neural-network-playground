@@ -21,6 +21,7 @@ import no.sigurof.plotting.engine.CoreEngine.setBackgroundColor
 import org.joml.Vector2f
 import org.joml.Vector4f
 
+// Run with -XstartOnFirstThread
 fun main() {
     plot2x2Network()
     plot2x3x2Network();
