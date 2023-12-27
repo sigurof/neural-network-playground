@@ -4,8 +4,6 @@ in vec4 aVertexPosition;
 
 uniform float aspect;
 
-uniform mat4 uProjectionMatrix;
-
 out vec3 position;
 out vec3 worldPosition;
 
