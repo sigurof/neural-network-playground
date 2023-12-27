@@ -1,8 +1,6 @@
 package no.sigurof.no.sigurof.ml.visualization
 
-import java.nio.FloatBuffer
 import no.sigurof.ml.Matrix
-import no.sigurof.ml.matrixRow
 import no.sigurof.plotting.Shader
 import no.sigurof.plotting.ShaderManager
 import org.joml.Matrix3f
@@ -27,8 +25,7 @@ class Network2x2Shader : Shader(
         val floatArray: FloatArray = matrix
             .plusRow(doubleArrayOf(0.0, 0.0, 0.0))
             .data.map { it.toFloat() }.toFloatArray()
-//        println("length is ${floatArray.size}")
-        ShaderManager.loadMatrix3x3(
+        ShaderManager.loadMatrix3(
             locations.getValue(MATRIX),
             floatArray
         )
