@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { startThree, threeJsInitialized } from "./ThreeCode.ts";
+import { startThree, tearDownScene, threeJsInitialized } from "./ThreeCode.ts";
 
 export const Input = ({
     name,
@@ -75,12 +75,12 @@ async function train(): Promise<Form> {
         },
     );
     return {
-        weight00: res.data[0].data[0],
-        weight01: res.data[0].data[1],
-        bias0: res.data[0].data[2],
-        weight10: res.data[0].data[3],
-        weight11: res.data[0].data[4],
-        bias1: res.data[0].data[5],
+        weight00: res.data[0].data[0][0],
+        weight01: res.data[0].data[0][1],
+        bias0: res.data[0].data[0][2],
+        weight10: res.data[0].data[1][0],
+        weight11: res.data[0].data[1][1],
+        bias1: res.data[0].data[1][2],
     };
 }
 
