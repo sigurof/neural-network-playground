@@ -18,14 +18,18 @@ import no.sigurof.plotting.RED
 import no.sigurof.plotting.ShaderManager
 import no.sigurof.plotting.SphereShader
 import no.sigurof.plotting.engine.CoreEngine.setBackgroundColor
+import no.sigurof.randomlyDistributedPoints
 import org.joml.Vector2f
 import org.joml.Vector4f
 
 // Run with -XstartOnFirstThread
 fun main() {
 //    plot2x2Network()
-    plot2x3x2Network();
+    startKtorServer()
+//    println("Hello, world!!!")
+//    plot2x3x2Network();
 }
+
 
 class PosVsColor(
     val pos: XY,
