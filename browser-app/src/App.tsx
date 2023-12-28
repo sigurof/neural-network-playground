@@ -23,29 +23,27 @@ function startThree() {
     const scene = new THREE.Scene();
     // const frustumSize = 5;
     const aspect = window.innerWidth / window.innerHeight;
-    const camera = new THREE.OrthographicCamera(
-        -1, 1, 1, -1, 0.1, 100);
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0.1, 100);
 
     const renderer = new THREE.WebGLRenderer({
         canvas: elementById,
         antialias: true,
     });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    const geometry = new THREE.BufferGeometry();
     // Float array of 4 2d points
     const position = [
         // First triangle
-        -1.0, -1.0, // bottom left
-        1.0, -1.0, // bottom right
+        -1.0, -1.0,  // bottom left
+        1.0, -1.0,  // bottom right
         1.0, 1.0, // top right
 
         // Second triangle
-        -1.0, -1.0, // bottom left
-        1.0, 1.0, // top right
+        -1.0, -1.0,  // bottom left
+        1.0, 1.0,  // top right
         -1.0, 1.0, // top left
     ];
     // Upload positions to the geometry as static draw
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(position, 2).setUsage(THREE.StaticDrawUsage));
+
 
     // const geometry = new THREE.PlaneGeometry(1, 1);
     const material = new THREE.RawShaderMaterial({
@@ -60,13 +58,44 @@ function startThree() {
         },
     });
     // const circle = new THREE.Mesh(geometry, material);
+
+    // const translateArray = new Float32Array( particleCount * 3 );
+    //
+    // for ( let i = 0, i3 = 0, l = particleCount; i < l; i ++, i3 += 3 ) {
+    //
+    //     translateArray[ i3 + 0 ] = Math.random() * 2 - 1;
+    //     translateArray[ i3 + 1 ] = Math.random() * 2 - 1;
+    //     translateArray[ i3 + 2 ] = Math.random() * 2 - 1;
+    //
+    // }
+    //
     let positions = [...Array(5)].map((_) => {
-        return {x: Math.random(), y: Math.random()}
+        return { x: Math.random(), y: Math.random() };
     });
-    positions.forEach((_) => {
-        scene.add(new THREE.Mesh(geometry, material));
-    })
-    // scene.add(circle);
+    const translateArray = new Float32Array(positions.length * 2);
+    positions.forEach((position, index) => {
+        let positionIndex = index * 2;
+        translateArray[positionIndex] = position.x;
+        translateArray[positionIndex + 1] = position.y;
+    });
+
+    const geometry = new THREE.InstancedBufferGeometry();
+
+    geometry.setAttribute(
+        "position",
+
+        new THREE.Float32BufferAttribute(position, 2).setUsage(
+            THREE.StaticDrawUsage,
+        ),
+    );
+    geometry.setAttribute(
+        "translate",
+        new THREE.InstancedBufferAttribute(translateArray, 2),
+    );
+
+    scene.add(new THREE.Mesh(geometry, material));
+
+
     function animate() {
         requestAnimationFrame(animate);
         renderer.render(scene, camera);
