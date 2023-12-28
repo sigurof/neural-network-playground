@@ -1128,7 +1128,7 @@ __metadata:
     prettier: "npm:^3.1.1"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
-    three: "npm:0.153.0"
+    three: "npm:0.160.0"
     typescript: "npm:^5.2.2"
     vite: "npm:^5.0.8"
   languageName: unknown
@@ -2871,10 +2871,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"three@npm:0.153.0":
-  version: 0.153.0
-  resolution: "three@npm:0.153.0"
-  checksum: c9a507ab30f2c29dde57c77b92bb43add74e001640e4d8a0e6a96d897dacac6d329ae44652107292cf8c79e3889cd015cd1daac1e43da277684e8097c48c364b
+"three@npm:0.160.0":
+  version: 0.160.0
+  resolution: "three@npm:0.160.0"
+  checksum: d78e9605de6f8072e7fbebe36db7741c13f2ae89be15b4421d2fc7d549e216f53cb3e136d98e9424648f19a42345f47f8186478e038f0046655475166c156b0b
   languageName: node
   linkType: hard
 
