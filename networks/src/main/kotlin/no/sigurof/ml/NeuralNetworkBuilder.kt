@@ -1,24 +1,27 @@
 package no.sigurof.ml
 
 
-open class Data<Value, Label>(
-    val value: Value,
-    val label: Label,
+//open class Data<Value, Label>(
+//    val value: Value,
+//    val label: Label,
+//)
+
+data class InputVsOutput(
+    val input: DoubleArray,
+    val output: DoubleArray,
 )
 
-class PosVsColor(
-    val pos: XY,
-    val color: String,
-) : Data<XY, String>(pos, color)
+//class PosVsColor(
+//    val pos: XY,
+//    val color: String,
+//) : Data<XY, String>(pos, color)
 
 class NeuralNetworkBuilder(
     layers: List<Int>,
 ) {
-
-
     private var randomizedWeights = layers.zipWithNext { a, b -> randomArray2(rows = b, cols = (a + 1)) }
 
-    fun train(trainingData: List<PosVsColor>): NeuralNetwork {
+    fun train(trainingData: List<InputVsOutput>): NeuralNetwork {
         val weightsDimensions = randomizedWeights.sumOf { it.rows * it.cols }
         val costFunctionMin = gradientDescent(n = weightsDimensions) { weightsVector ->
             NeuralNetwork(weightsVector.toMatrices(randomizedWeights))

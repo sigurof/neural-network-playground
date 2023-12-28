@@ -3,8 +3,8 @@ package no.sigurof
 import DisplayManager
 import DisplayManager.Companion.HEIGHT
 import DisplayManager.Companion.WIDTH
+import no.sigurof.ml.InputVsOutput
 import no.sigurof.ml.NeuralNetworkBuilder
-import no.sigurof.ml.PosVsColor
 import no.sigurof.ml.XY
 import no.sigurof.ml.visualization.Network2x2Shader
 import no.sigurof.ml.visualization.Network2x3x2Shader
@@ -23,8 +23,18 @@ import org.joml.Vector4f
 
 // Run with -XstartOnFirstThread
 fun main() {
-    plot2x2Network()
+//    plot2x2Network()
     plot2x3x2Network();
+}
+
+class PosVsColor(
+    val pos: XY,
+    val color: String,
+) {
+    val colorAsVector: DoubleArray
+        get() {
+            return if (color == "red") doubleArrayOf(1.0, 0.0) else doubleArrayOf(0.0, 1.0)
+        }
 }
 
 fun plot2x3x2Network() {
@@ -40,14 +50,20 @@ fun plot2x3x2Network() {
         val color = if (vec.color == "red") RED else BLUE
         Circle(center = Vector2f(x.toFloat(), y.toFloat()), radius = 0.01, color = color)
     }
+    val realTrainingData = trainingData.map {
+        InputVsOutput(
+            input = doubleArrayOf(it.pos.x, it.pos.y),
+            output = it.colorAsVector
+        )
+    }
     val network = NeuralNetworkBuilder(
         layers = listOf(
             2, 3, 2
         )
-    ).train(trainingData)
+    ).train(realTrainingData)
     val firstWeights = network.weights[0]
     val secondWeights = network.weights[1]
-    println("Cost is ${network.calculateCostFunction(trainingData)}")
+    println("Cost is ${network.calculateCostFunction(realTrainingData)}")
     DisplayManager.FPS = 60
     DisplayManager.withWindowOpen { window ->
         val shader = Network2x3x2Shader()
@@ -76,6 +92,7 @@ fun plot2x3x2Network() {
     }
 }
 
+
 fun plot2x2Network() {
     val trainingData: List<PosVsColor> = randomlyDistributedPoints(n = 100).map { vec ->
         val boundaryY = 0.0
@@ -85,18 +102,24 @@ fun plot2x2Network() {
             color = if (vec.x + vec.y < boundaryX) "blue" else "red"
         )
     }
-    val circles = trainingData.map { vec ->
+    val circles: List<Circle> = trainingData.map { vec ->
         val x = vec.pos.x
         val y = vec.pos.y
         val color = if (vec.color == "red") RED else BLUE
         Circle(center = Vector2f(x.toFloat(), y.toFloat()), radius = 0.01, color = color)
     }
+    val realTrainingData = trainingData.map {
+        InputVsOutput(
+            input = doubleArrayOf(it.pos.x, it.pos.y),
+            output = it.colorAsVector
+        )
+    }
     val network = NeuralNetworkBuilder(
         layers = listOf(
             2, 2
         )
-    ).train(trainingData)
-    println("Cost is ${network.calculateCostFunction(trainingData)}")
+    ).train(realTrainingData)
+    println("Cost is ${network.calculateCostFunction(realTrainingData)}")
     DisplayManager.FPS = 60
     DisplayManager.withWindowOpen { window ->
         val shader = Network2x2Shader()
