@@ -1,11 +1,14 @@
 package no.sigurof.ml
 
+import kotlinx.serialization.Serializable
+
 
 //open class Data<Value, Label>(
 //    val value: Value,
 //    val label: Label,
 //)
 
+@Serializable
 data class InputVsOutput(
     val input: DoubleArray,
     val output: DoubleArray,

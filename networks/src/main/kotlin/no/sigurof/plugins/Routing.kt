@@ -1,11 +1,20 @@
 package no.sigurof.plugins
 
-import io.ktor.server.routing.*
-import io.ktor.http.*
-import io.ktor.server.application.*
-import io.ktor.server.response.*
-import io.ktor.server.request.*
-import no.sigurof.routes.customerRouting;
+import io.ktor.server.application.Application
+import io.ktor.server.application.call
+import io.ktor.server.request.receive
+import io.ktor.server.response.respond
+import io.ktor.server.response.respondText
+import io.ktor.server.routing.get
+import io.ktor.server.routing.post
+import io.ktor.server.routing.routing
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import no.sigurof.ml.Matrix
+import no.sigurof.ml.NeuralNetwork
+import no.sigurof.ml.NeuralNetworkBuilder
+import no.sigurof.models.NeuralNetworkParams
+import no.sigurof.routes.customerRouting
 import no.sigurof.routes.getOrderRoute
 import no.sigurof.routes.listOrdersRoute
 import no.sigurof.routes.totalizeOrderRoute
@@ -16,9 +25,6 @@ fun Application.configureRouting() {
         listOrdersRoute()
         getOrderRoute()
         totalizeOrderRoute()
-    }
-    routing {
-
         get("/") {
             call.respondText("Hello World!")
         }
@@ -30,9 +36,22 @@ fun Application.configureRouting() {
         * - the dimensions of hidden layers
         * */
 
-        get("/ml/network") {
-//            plot2x2Network()
-            call.respondText("Getting you a network!")
+        post("/ml/network") {
+            val params: NeuralNetworkParams = call.receive<NeuralNetworkParams>();
+            println("Received the following: ${Json.encodeToString(params)}")
+            val firstLayer = params.trainingData.first().input.size
+            val lastLayer = params.trainingData.first().output.size
+            val neuralNetwork: NeuralNetwork = NeuralNetworkBuilder(
+                layers = listOf(
+                    listOf(firstLayer),
+                    params.hiddenLayerDimensions,
+                    listOf(lastLayer)
+                ).flatten()
+            ).train(
+                trainingData = params.trainingData
+            )
+            val weights: List<Matrix> = neuralNetwork.weights
+            call.respond(weights)
         }
     }
 }

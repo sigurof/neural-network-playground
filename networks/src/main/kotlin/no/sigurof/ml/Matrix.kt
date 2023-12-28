@@ -1,6 +1,9 @@
 package no.sigurof.ml
 
+import kotlinx.serialization.Serializable
 
+
+@Serializable
 class Matrix(val rows: Int, val data: DoubleArray) {
     init {
         require(
