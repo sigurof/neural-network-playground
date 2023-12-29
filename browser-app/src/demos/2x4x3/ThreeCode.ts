@@ -1,11 +1,9 @@
 import * as THREE from "three";
 import circlesVtxSource from "../../three/circles/vertex.shader?raw";
 import circlesFragSource from "../../three/circles/fragment.shader?raw";
-// import networkVtxSource from "../../three/network/vertex.shader?raw";
-// import networkFragSource from "../../three/network/fragment.shader?raw";
 import networkVtxSource from "./shaders/network/vertex.shader?raw";
 import networkFragSource from "./shaders/network/fragment.shader?raw";
-import { Matrix } from "./Demo3x4x3RedGreenBlue.tsx";
+import { Matrix } from "./Demo2x4x3RedGreenBlue.tsx";
 
 const SQUARE: number[] = [
     -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,
@@ -46,8 +44,8 @@ function createBillboardMesh(
     circlesInputOutput.forEach(({ output }, index) => {
         const positionIndex = index * 3;
         circleColorsArray[positionIndex] = output[0];
-        circleColorsArray[positionIndex + 1] = 0; // green channel always zero
-        circleColorsArray[positionIndex + 2] = output[1];
+        circleColorsArray[positionIndex + 1] = output[1]; // green channel always zero
+        circleColorsArray[positionIndex + 2] = output[2];
     });
     geometry.setAttribute(
         "translate",
@@ -69,7 +67,8 @@ function createBackgroundMesh(aspect: number, startValues: Matrix[]) {
         ),
     );
 
-    const { firstWeights, secondWeights } = createLayers(startValues);
+    const { firstWeights, secondWeights, thirdWeights } =
+        createLayers(startValues);
 
     const material = new THREE.RawShaderMaterial({
         glslVersion: THREE.GLSL3,
@@ -80,6 +79,7 @@ function createBackgroundMesh(aspect: number, startValues: Matrix[]) {
             aspect: { value: aspect },
             firstWeights: { value: firstWeights },
             secondWeights: { value: secondWeights },
+            thirdWeights: { value: thirdWeights },
         },
     });
     const circleTranslationsArray = new Float32Array(2);
@@ -125,6 +125,7 @@ const interval = 1000 / fps;
 function createLayers(networkLayers: Matrix[]): {
     firstWeights: THREE.Matrix3;
     secondWeights: THREE.Matrix4;
+    thirdWeights: THREE.Matrix4;
 } {
     // Populating all fields of the 3x3 matrix
     const firstWeights = new THREE.Matrix3(
@@ -149,17 +150,36 @@ function createLayers(networkLayers: Matrix[]): {
         networkLayers[1].data[1][1],
         networkLayers[1].data[1][2],
         networkLayers[1].data[1][3],
-        0,
-        0,
-        0,
-        0,
+        networkLayers[1].data[2][0],
+        networkLayers[1].data[2][1],
+        networkLayers[1].data[2][2],
+        networkLayers[1].data[2][3],
         0,
         0,
         0,
         0,
     );
 
-    return { firstWeights, secondWeights };
+    const thirdWeights = new THREE.Matrix4(
+        networkLayers[2].data[0][0],
+        networkLayers[2].data[0][1],
+        networkLayers[2].data[0][2],
+        networkLayers[2].data[0][3],
+        networkLayers[2].data[1][0],
+        networkLayers[2].data[1][1],
+        networkLayers[2].data[1][2],
+        networkLayers[2].data[1][3],
+        networkLayers[2].data[2][0],
+        networkLayers[2].data[2][1],
+        networkLayers[2].data[2][2],
+        networkLayers[2].data[2][3],
+        0,
+        0,
+        0,
+        0,
+    );
+
+    return { firstWeights, secondWeights, thirdWeights };
 }
 
 export function startThree(
@@ -192,14 +212,15 @@ export function startThree(
 
             if (controls.hasChanged) {
                 controls.hasChanged = false;
-                const { firstWeights, secondWeights } = createLayers(
-                    controls.formValues,
-                );
+                const { firstWeights, secondWeights, thirdWeights } =
+                    createLayers(controls.formValues);
                 // TODO Set the new values on the uniform here
                 backgroundMesh.material.uniforms.firstWeights.value =
                     firstWeights;
                 backgroundMesh.material.uniforms.secondWeights.value =
                     secondWeights;
+                backgroundMesh.material.uniforms.thirdWeights.value =
+                    thirdWeights;
             }
 
             then = now - (delta % interval);

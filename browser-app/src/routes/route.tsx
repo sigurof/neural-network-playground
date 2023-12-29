@@ -5,10 +5,11 @@ import Contact from "./Contact.tsx";
 import { Demo2x2RedBlue } from "../demos/2x2/Demo2x2RedBlue.tsx";
 import { Demo2x3x2RedAndBlue } from "../demos/2x3x2/Demo2x3x2RedAndBlue.tsx";
 import React from "react";
+import { Demo2x4x3RedGreenBlue } from "../demos/2x4x3/Demo2x4x3RedGreenBlue.tsx";
 
 const path2x2 = "/ml/demos/2x2";
 const path2x3x2 = `/ml/demos/2x3x2`;
-const path3x3x3 = "/ml/demos/3x3x3";
+const path2x4x3 = "/ml/demos/2x4x3";
 export const routes = [
     {
         path: "/",
@@ -30,8 +31,8 @@ export const routes = [
                 errorElement: <ErrorPage />,
             },
             {
-                path: path3x3x3,
-                element: <Demo2x3x2RedAndBlue />,
+                path: path2x4x3,
+                element: <Demo2x4x3RedGreenBlue />,
                 errorElement: <ErrorPage />,
             },
         ],
@@ -60,7 +61,7 @@ export default function Root() {
                                 <Link to={path2x3x2}>2x3x2 Red/Blue Demo</Link>
                             </li>
                             <li>
-                                <Link to={path3x3x3}>
+                                <Link to={path2x4x3}>
                                     3x4x3 Red/Green/Blue Demo
                                 </Link>
                             </li>

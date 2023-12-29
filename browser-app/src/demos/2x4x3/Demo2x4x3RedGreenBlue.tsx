@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { startThree, threeJsInitialized } from "./ThreeCode.ts";
-import { circlesDataSets, TrainingData } from "./data.ts";
-
-const trainingData = circlesDataSets.nonLinear.circularRegion;
-const hiddenLayerDimensions = [4];
+import { circlesDataSets } from "./data3d.ts";
+import { TrainingData } from "./data.ts";
+import { Slider } from "@mui/material";
+import styled from "styled-components";
 
 export type Matrix = {
     rows: number;
@@ -12,25 +12,52 @@ export type Matrix = {
     data: number[][];
 };
 
-const initialState: Matrix[] = [
-    {
-        rows: 3,
-        cols: 3,
-        data: [
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0],
-        ],
-    },
-    {
-        rows: 2,
-        cols: 4,
-        data: [
-            [0.0, 0.0, 0.0, 0.0],
-            [0.0, 0.0, 0.0, 0.0],
-        ],
-    },
+const trainingData: TrainingData = circlesDataSets.nonLinear.redGreenBlue;
+const hiddenLayerDimensions = [3, 3];
+const layerDimensions = [
+    trainingData[0].input.length,
+    ...hiddenLayerDimensions,
+    trainingData[0].output.length,
 ];
+const zipWithNext = (arr: number[]) => {
+    const result: { left: number; right: number }[] = [];
+    for (let i = 0; i < arr.length - 1; i++) {
+        result.push({ left: arr[i], right: arr[i + 1] });
+    }
+    return result;
+};
+
+function calculateWeightsAndBiasesDimensions(
+    inputNodes: number,
+    outputNodes: number,
+) {
+    const numberOfBiases = outputNodes;
+    const numberOfWeights = inputNodes * outputNodes;
+    return numberOfWeights + numberOfBiases;
+}
+
+const weightsAndBiasesDimensions = zipWithNext(layerDimensions).map(
+    ({ left, right }) => {
+        return {
+            rows: right,
+            cols: left + 1, // +1 for the bias
+        };
+    },
+);
+
+function range(rows: number) {
+    return [...Array(rows)];
+}
+
+const initialState: Matrix[] = weightsAndBiasesDimensions.map((dimensions) => {
+    const { rows, cols } = dimensions;
+    const data = range(rows).map(() => range(cols).map(() => 0.0));
+    return {
+        rows: rows,
+        cols: cols,
+        data: data,
+    };
+});
 
 async function train(
     trainingData: TrainingData,
@@ -52,7 +79,6 @@ async function train(
 }
 
 function castToSimpleNetworkLayer(data: unknown): Matrix[] {
-    console.log(data);
     // throw error if not an array:
     if (!Array.isArray(data)) {
         throw new Error("data is not an array");
@@ -62,44 +88,67 @@ function castToSimpleNetworkLayer(data: unknown): Matrix[] {
         throw new Error("data is not of length 1");
     }
     // each element of the array ought to be an object with properties rows, cols, data:
-    data.forEach((element) => {
-        if (
-            typeof element !== "object" ||
-            !element.hasOwnProperty("rows") ||
-            !element.hasOwnProperty("columns") ||
-            !element.hasOwnProperty("data")
-        ) {
-            throw new Error("data element is not an object with properties");
-        }
-    });
+    // data.forEach((element) => {
+    //     if (
+    //         typeof element !== "object" ||
+    //         !element.hasOwnProperty("rows") ||
+    //         !element.hasOwnProperty("columns") ||
+    //         !element.hasOwnProperty("data")
+    //     ) {
+    //         throw new Error("data element is not an object with properties");
+    //     }
+    // });
 
     return data;
 }
 
+const MyLabel = styled.label`
+    grid-column-start: 1;
+`
+const SliderContainer = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+`
+
 const WeightBiasInput = ({
+    type,
     name,
     value,
     handleChange,
 }: {
+    type: "weight" | "bias"
     name: string;
     value: number;
-    handleChange: (value: string) => void;
+    handleChange: (value: number) => void;
 }) => {
     return (
-        <div>
-            <label htmlFor={"input" + name}>{name}</label>
-            <input
+        <SliderContainer>
+            <MyLabel htmlFor={"input"+name}>{`${type}`}</MyLabel>
+            <Slider
                 id={"input" + name}
-                type="range"
-                min="-10" // Set the minimum value of the slider
                 value={value}
-                max="10" // Set the maximum value of the slider
-                step="0.01" // Set the step size for each slide move
-                onChange={(e) => handleChange(e.target.value)}
+                size={"small"}
+                min={-10}
+                max={10}
+                step={0.01}
+                onChange={(_, newValue) => {
+                    const valueAsNumber = Number(newValue);
+                    if (isNaN(valueAsNumber)) {
+                        return;
+                    }
+                    handleChange(newValue as number);
+                }}
+                aria-label="Default"
+                valueLabelDisplay="auto"
             />
-        </div>
+        </SliderContainer>
     );
 };
+const MatrixRowWrapper = styled.div`
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    column-gap: 1rem;
+`
 
 const MatrixRowInput = ({
     name,
@@ -110,28 +159,25 @@ const MatrixRowInput = ({
     row: number[];
     handleChange: (value: number[]) => void;
 }) => {
-    console.log(row);
     return (
-        <div>
+        <MatrixRowWrapper>
             {row.map((value, index) => {
+                const isLastOnRow = index === row.length - 1;
                 return (
                     <WeightBiasInput
+                        type={isLastOnRow ? "bias" : "weight"}
                         key={`input${name}${index}`}
                         name={`input${name}${index}`}
                         value={value}
-                        handleChange={(newValue: string) => {
-                            const valueAsNumber = Number(newValue);
-                            if (isNaN(valueAsNumber)) {
-                                return;
-                            }
+                        handleChange={(newValue: number) => {
                             const newValues = [...row];
-                            newValues[index] = valueAsNumber;
+                            newValues[index] = newValue;
                             handleChange(newValues);
                         }}
                     />
                 );
             })}
-        </div>
+        </MatrixRowWrapper>
     );
 };
 
@@ -144,7 +190,6 @@ function InputFieldsForMatrix({
     handleFormChange: (form: Matrix) => void;
     value: Matrix;
 }) {
-    console.log(value);
     return (
         <div>
             <h3>Matrix {matrixIndex}</h3>
@@ -170,7 +215,7 @@ function InputFieldsForMatrix({
     );
 }
 
-export const Demo3x4x3RedGreenBlue = () => {
+export const Demo2x4x3RedGreenBlue = () => {
     const [form, setForm] = useState<Matrix[]>(initialState);
     const controls = useRef<{
         hasChanged: boolean;
@@ -210,7 +255,10 @@ export const Demo3x4x3RedGreenBlue = () => {
             })}
             <button
                 onClick={async () => {
-                    const result = await train(trainingData, hiddenLayerDimensions);
+                    const result = await train(
+                        trainingData,
+                        hiddenLayerDimensions,
+                    );
                     const formData = castToSimpleNetworkLayer(result);
                     handleFormChange(formData);
                 }}

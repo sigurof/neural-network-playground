@@ -11,6 +11,9 @@
     "format-write": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "dependencies": {
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.15.2",
     "axios": "^1.6.3",
     "gl-matrix": "^3.4.3",
     "localforage": "^1.10.0",
@@ -19,6 +22,7 @@
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.21.1",
     "sort-by": "^1.2.0",
+    "styled-components": "^6.1.6",
     "three": "0.160.0"
   },
   "devDependencies": {

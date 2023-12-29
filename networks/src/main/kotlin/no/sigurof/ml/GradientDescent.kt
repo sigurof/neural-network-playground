@@ -4,14 +4,14 @@ import kotlin.math.sqrt
 
 
 fun gradientDescent(n: Int, costFuncion: (coord: DoubleArray) -> Double): DoubleArray {
-    val learningRate = 3
+    val learningRate = 6
     var startCoord = DoubleArray(n) { i -> Math.random() }
     val derivative = DoubleArray(n) { 10.0 }
     val delta = 0.0001
     var steps = 0
-    val d = 0.001
+    val d = 0.0003
     var functionValue = costFuncion.invoke(startCoord)
-    while (derivative.length() > d) {
+    while (derivative.length() > d && steps < 4000) {
         functionValue = costFuncion.invoke(startCoord)
 //        println("Step $steps, derivative = ${derivative.length()}, cost = $functionValue")
         println("step = $steps, cost = $functionValue")
