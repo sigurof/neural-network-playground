@@ -2,8 +2,16 @@ package no.sigurof.ml
 
 import kotlin.math.sqrt
 
+fun interface Iterationcallback{
 
-fun gradientDescentOld(n: Int, costFuncion: (coord: DoubleArray) -> Double): DoubleArray {
+    fun invoke(step: Int, coordinate: DoubleArray, functionValue: Double)
+}
+
+fun gradientDescentOld(
+    n: Int,
+    costFuncion: (coord: DoubleArray) -> Double,
+    iterationCallback: Iterationcallback? = null,
+): DoubleArray {
     val learningRate = 6
     var startCoord = DoubleArray(n) { i -> Math.random() }
     val derivative = DoubleArray(n) { 10.0 }
@@ -13,6 +21,7 @@ fun gradientDescentOld(n: Int, costFuncion: (coord: DoubleArray) -> Double): Dou
     var functionValue: Double
     while (derivative.length() > d && steps < 4000) {
         functionValue = costFuncion.invoke(startCoord)
+        iterationCallback?.invoke(steps, startCoord, functionValue)
         val newCoord: DoubleArray = DoubleArray(size = startCoord.size)
         for (index in startCoord.indices) {
             val functionValueIncr = costFuncion.invoke(startCoord.increment(index, delta))
@@ -24,6 +33,8 @@ fun gradientDescentOld(n: Int, costFuncion: (coord: DoubleArray) -> Double): Dou
         startCoord = newCoord
         steps++;
     }
+    functionValue = costFuncion.invoke(startCoord)
+    iterationCallback?.invoke(steps, startCoord, functionValue)
     println("steps = $steps")
     return startCoord
 }
