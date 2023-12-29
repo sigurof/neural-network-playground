@@ -4,7 +4,6 @@ import DisplayManager
 import DisplayManager.Companion.HEIGHT
 import DisplayManager.Companion.WIDTH
 import no.sigurof.ml.InputVsOutput
-import no.sigurof.ml.Layer
 import no.sigurof.ml.NeuralNetworkBuilder
 import no.sigurof.ml.XY
 import no.sigurof.ml.visualization.Network2x2Shader
@@ -64,8 +63,8 @@ fun plot2x3x2Network() {
         trainingData = realTrainingData,
         hiddenLayerDimensions = listOf(3),
     ).train()
-    val firstWeights: Layer = network.weightsAndBiases.layers[0]
-    val secondWeights: Layer = network.weightsAndBiases.layers[1]
+    val firstWeights = network.weightsAndBiases.layers[0]
+    val secondWeights = network.weightsAndBiases.layers[1]
     println("Cost is ${network.calculateCostFunction(realTrainingData)}")
     DisplayManager.FPS = 60
     DisplayManager.withWindowOpen { window ->
