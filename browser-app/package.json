@@ -27,6 +27,7 @@
     "three": "0.160.0"
   },
   "devDependencies": {
+    "@types/chart.js": "^2.9.41",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/sort-by": "^1",

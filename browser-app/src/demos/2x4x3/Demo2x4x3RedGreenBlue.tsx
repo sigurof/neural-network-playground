@@ -6,6 +6,7 @@ import { TrainingData } from "./data.ts";
 import { Slider } from "@mui/material";
 import styled from "styled-components";
 import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
+import { range } from "../../utils.ts";
 
 export type Matrix = {
     rows: number;
@@ -46,10 +47,6 @@ const weightsAndBiasesDimensions = zipWithNext(layerDimensions).map(
     },
 );
 
-function range(rows: number) {
-    return [...Array(rows)];
-}
-
 const initialState: Matrix[] = weightsAndBiasesDimensions.map((dimensions) => {
     const { rows, cols } = dimensions;
     const data = range(rows).map(() => range(cols).map(() => 0.0));
@@ -79,30 +76,24 @@ async function train(
     return res.data;
 }
 
+function castToStats(result: unknown): { step: number; cost: number }[] {
+    const record: unknown = (result as { record: unknown }).record;
+    return record as { step: number; cost: number }[];
+}
+
 function castToSimpleNetworkLayer(data: unknown): Matrix[] {
-    const data2 = (data as { layers: unknown }).layers;
+    const layers = (data as { layers: unknown }).layers;
 
     // throw error if not an array:
-    if (!Array.isArray(data2)) {
+    if (!Array.isArray(layers)) {
         throw new Error("data is not an array");
     }
     // throw error if the array is empty:
-    if (data2.length < 1) {
+    if (layers.length < 1) {
         throw new Error("data is not of length 1");
     }
-    // each element of the array ought to be an object with properties rows, cols, data:
-    // data.forEach((element) => {
-    //     if (
-    //         typeof element !== "object" ||
-    //         !element.hasOwnProperty("rows") ||
-    //         !element.hasOwnProperty("columns") ||
-    //         !element.hasOwnProperty("data")
-    //     ) {
-    //         throw new Error("data element is not an object with properties");
-    //     }
-    // });
 
-    return data2;
+    return layers;
 }
 
 const MyLabel = styled.label`
@@ -217,6 +208,7 @@ function InputFieldsForMatrix({
         </div>
     );
 }
+
 const GraphicsContainer = styled.div`
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -237,6 +229,9 @@ export const Demo2x4x3RedGreenBlue = () => {
         hasChanged: boolean;
         formValues: Matrix[];
     } | null>(null);
+    const chartUpdater = useRef<{
+        update: (points: { x: number; y: number }[]) => void;
+    } | null>(null);
 
     function handleFormChange(form: Matrix[]) {
         setForm(form);
@@ -246,7 +241,9 @@ export const Demo2x4x3RedGreenBlue = () => {
 
     useEffect(() => {
         if (!chartInitialized) {
-            startChartJs();
+            chartUpdater.current = {
+                update: startChartJs()!.updateChart
+            };
         }
     }, []);
     useEffect(() => {
@@ -281,6 +278,13 @@ export const Demo2x4x3RedGreenBlue = () => {
                         hiddenLayerDimensions,
                     );
                     const formData = castToSimpleNetworkLayer(result);
+                    const statistics = castToStats(result);
+                    chartUpdater.current!.update(
+                        statistics.map((stat) => {
+                            return { x: stat.step, y: stat.cost };
+                        }),
+                    );
+
                     handleFormChange(formData);
                 }}
             >
@@ -289,7 +293,7 @@ export const Demo2x4x3RedGreenBlue = () => {
             <GraphicsContainer>
                 <ThreeJsContainer id="threeCanvas" />
 
-                <ChartContainer >
+                <ChartContainer>
                     <canvas id="chartCanvas" />
                 </ChartContainer>
             </GraphicsContainer>
