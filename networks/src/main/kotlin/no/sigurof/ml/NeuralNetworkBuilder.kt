@@ -72,7 +72,7 @@ class NeuralNetworkBuilder(
                 val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
                 NeuralNetwork(
                     weightsAndBiases(weightsVector)
-                ).calculateGradient(trainingDataChunk) / trainingDataChunk.size
+                ).calculateGradient(trainingDataChunk) / (trainingDataChunk.size.toDouble())
             },
             iterationCallback = { step, coordinate, functionValue ->
                 record.add(Record(step = step, cost = buildNetwork(coordinate).calculateCostFunction(trainingData)))
@@ -95,6 +95,6 @@ class NeuralNetworkBuilder(
     }
 }
 
-private operator fun DoubleArray.div(size: Int): DoubleArray {
-    return DoubleArray(this.size) { i -> this[i] / size.toDouble() }
+private operator fun DoubleArray.div(size: Double): DoubleArray {
+    return DoubleArray(this.size) { i -> this[i] / size }
 }
