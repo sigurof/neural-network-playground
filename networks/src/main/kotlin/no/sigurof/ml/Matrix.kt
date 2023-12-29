@@ -78,20 +78,18 @@ class Matrix(val rows: Int, val data: DoubleArray) {
     }
 }
 
-fun randomArray2(rows: Int, cols: Int): Matrix {
-    val array2 = Matrix(rows, cols)
+fun randomMatrix(rows: Int, cols: Int): Matrix {
+    val matrix = Matrix(rows, cols)
     for (row in 0 until rows) {
         for (col in 0 until cols) {
-            array2[row, col] = Math.random()
+            matrix[row, col] = Math.random()
         }
     }
-    return array2
+    return matrix
 }
 
 fun matrixOfRows(vararg rows: DoubleArray): Matrix {
     return Matrix(rows = rows.size, data = rows.flatMap { it.asIterable() }.toDoubleArray())
 }
 
-fun matrixRow(vararg values: Double): DoubleArray {
-    return values
-}
+fun matrixRow(vararg values: Double): DoubleArray = values
