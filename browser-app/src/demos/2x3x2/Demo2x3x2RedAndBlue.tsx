@@ -51,16 +51,18 @@ async function train(
 
 function castToSimpleNetworkLayer(data: unknown): Matrix[] {
     console.log(data);
+    // type safely pick layers property from data:
+    const data2 = (data as { layers: unknown }).layers;
     // throw error if not an array:
-    if (!Array.isArray(data)) {
+    if (!Array.isArray(data2)) {
         throw new Error("data is not an array");
     }
     // throw error if the array is empty:
-    if (data.length < 1) {
+    if (data2.length < 1) {
         throw new Error("data is not of length 1");
     }
     // each element of the array ought to be an object with properties rows, cols, data:
-    data.forEach((element) => {
+    data2.forEach((element) => {
         if (
             typeof element !== "object" ||
             !element.hasOwnProperty("rows") ||
@@ -71,7 +73,7 @@ function castToSimpleNetworkLayer(data: unknown): Matrix[] {
         }
     });
 
-    return data;
+    return data2;
 }
 
 const WeightBiasInput = ({
@@ -108,7 +110,7 @@ const MatrixRowInput = ({
     row: number[];
     handleChange: (value: number[]) => void;
 }) => {
-    console.log(row)
+    console.log(row);
     return (
         <div>
             {row.map((value, index) => {
@@ -142,7 +144,7 @@ function InputFieldsForMatrix({
     handleFormChange: (form: Matrix) => void;
     value: Matrix;
 }) {
-    console.log(value)
+    console.log(value);
     return (
         <div>
             <h3>Matrix {matrixIndex}</h3>

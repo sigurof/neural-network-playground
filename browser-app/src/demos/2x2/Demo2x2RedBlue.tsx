@@ -74,13 +74,14 @@ async function train(): Promise<Form> {
             },
         },
     );
+    let data = res.data.layers;
     return {
-        weight00: res.data[0].data[0][0],
-        weight01: res.data[0].data[0][1],
-        bias0: res.data[0].data[0][2],
-        weight10: res.data[0].data[1][0],
-        weight11: res.data[0].data[1][1],
-        bias1: res.data[0].data[1][2],
+        weight00: data[0].data[0][0],
+        weight01: data[0].data[0][1],
+        bias0: data[0].data[0][2],
+        weight10: data[0].data[1][0],
+        weight11: data[0].data[1][1],
+        bias1: data[0].data[1][2],
     };
 }
 
