@@ -1,5 +1,6 @@
 package no.sigurof.ml
 
+import kotlin.math.cos
 import kotlinx.serialization.Serializable
 
 
@@ -48,22 +49,19 @@ class NeuralNetworkBuilder(
     fun train(): NeuralNetwork {
         val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
         val costFunctionMin = gradientDescentOld(n = weightsDimensions) { weightsVector ->
-            NeuralNetwork(weightsVector.toMatrices(stuff))
-                .calculateCostFunction(trainingData)
+            NeuralNetwork(
+                weightsAndBiases(weightsVector)
+            ).calculateCostFunction(trainingData)
         }
-        return NeuralNetwork(costFunctionMin.toMatrices(stuff))
+        return NeuralNetwork(
+            weightsAndBiases(costFunctionMin)
+        )
     }
-}
 
-fun DoubleArray.toMatrices(randomizedWeights: List<Matrix>): List<Matrix> {
-    val theWeights: MutableList<Matrix> = mutableListOf()
-    var j = 0
-    val weightDimensions = randomizedWeights.map { Pair(it.rows, it.cols) }
-    for ((rows, cols) in weightDimensions) {
-        val offset = if (j == 0) 0 else weightDimensions[j].first * weightDimensions[j].second
-        val data = DoubleArray(rows * cols) { i -> this[i + offset] }
-        theWeights.add(Matrix(rows, data))
-        j++
+    private fun weightsAndBiases(data: DoubleArray): WeightsAndBiases {
+        return WeightsAndBiases(
+            data = data,
+            networkConnectionsIn = networkConnections
+        )
     }
-    return theWeights
 }

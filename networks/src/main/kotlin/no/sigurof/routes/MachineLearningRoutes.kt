@@ -12,6 +12,7 @@ import kotlinx.serialization.json.Json
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.NeuralNetwork
 import no.sigurof.ml.NeuralNetworkBuilder
+import no.sigurof.ml.WeightsAndBiases
 import no.sigurof.models.MatrixDto
 import no.sigurof.models.NeuralNetworkParams
 
@@ -37,7 +38,7 @@ fun Route.machineLearningRouting() {
             trainingData = params.trainingData,
             hiddenLayerDimensions = params.hiddenLayerDimensions
         ).train()
-        val weights: List<MatrixDto> = neuralNetwork.weights.map { it.toMatrixDto() }
+        val weights: List<MatrixDto> = neuralNetwork.weightsAndBiases.layers.map { it.matrix.toMatrixDto() }
         call.respond(weights)
     }
 }
