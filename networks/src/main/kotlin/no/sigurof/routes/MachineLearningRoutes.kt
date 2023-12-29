@@ -40,8 +40,6 @@ fun Route.machineLearningRouting() {
     post("/ml/network") {
         val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>();
         val includeProfiling = call.request.queryParameters["includeProfiling"]?.toBoolean() ?: false
-        val firstLayer = neuralNetworkParams.trainingData.first().input.size
-        val lastLayer = neuralNetworkParams.trainingData.first().output.size
         val neuralNetworkBuilder = NeuralNetworkBuilder(
             trainingData = neuralNetworkParams.trainingData,
             hiddenLayerDimensions = neuralNetworkParams.hiddenLayerDimensions

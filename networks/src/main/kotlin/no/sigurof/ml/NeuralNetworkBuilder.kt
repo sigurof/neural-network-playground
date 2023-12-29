@@ -46,14 +46,15 @@ class NeuralNetworkBuilder(
             listOf(outputLayer)
         ).flatten()
             .zipWithNext { nThis, nNext -> NetworkConnectionInfo(inputs = nThis, outputs = nNext) }
+    private val trainingDataChunks: List<List<InputVsOutput>> = trainingData.chunked(100)
 
     fun train(includeProfiling: Boolean = false): NeuralNetwork {
         val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
         val costFunctionMin = gradientDescentOld(n = weightsDimensions,
-            costFuncion = { weightsVector ->
+            costFuncion = { step, weightsVector ->
                 NeuralNetwork(
                     weightsAndBiases(weightsVector)
-                ).calculateCostFunction(trainingData)
+                ).calculateCostFunction(trainingDataChunks[step % trainingDataChunks.size])
             },
             iterationCallback = { step, coordinate, functionValue ->
                 record.add(Record(step = step, cost = functionValue))
