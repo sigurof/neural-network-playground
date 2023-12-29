@@ -1,7 +1,6 @@
 package no.sigurof.ml
 
 import kotlinx.serialization.Serializable
-import no.sigurof.ml.Record
 
 
 @Serializable
@@ -52,9 +51,10 @@ class NeuralNetworkBuilder(
         val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
         val costFunctionMin = gradientDescentOld(n = weightsDimensions,
             costFuncion = { step, weightsVector ->
+                val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
                 NeuralNetwork(
                     weightsAndBiases(weightsVector)
-                ).calculateCostFunction(trainingDataChunks[step % trainingDataChunks.size])
+                ).calculateCostFunction(trainingDataChunk)
             },
             iterationCallback = { step, coordinate, functionValue ->
                 record.add(Record(step = step, cost = functionValue))
@@ -65,10 +65,36 @@ class NeuralNetworkBuilder(
         )
     }
 
-    private fun weightsAndBiases(data: DoubleArray): WeightsAndBiases {
+    fun train2(includeProfiling: Boolean = false): NeuralNetwork {
+        val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
+        val costFunctionMin = gradientDescent(n = weightsDimensions,
+            gradientFunction = { step, weightsVector ->
+                val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
+                NeuralNetwork(
+                    weightsAndBiases(weightsVector)
+                ).calculateGradient(trainingDataChunk) / trainingDataChunk.size
+            },
+            iterationCallback = { step, coordinate, functionValue ->
+                record.add(Record(step = step, cost = buildNetwork(coordinate).calculateCostFunction(trainingData)))
+            }
+        )
+        return NeuralNetwork(
+            weightsAndBiases(costFunctionMin)
+        )
+    }
+
+    fun buildNetwork(data: DoubleArray): NeuralNetwork {
+        return NeuralNetwork(weightsAndBiases(data))
+    }
+
+    fun weightsAndBiases(data: DoubleArray): WeightsAndBiases {
         return WeightsAndBiases(
             data = data,
             networkConnectionsIn = networkConnections
         )
     }
+}
+
+private operator fun DoubleArray.div(size: Int): DoubleArray {
+    return DoubleArray(this.size) { i -> this[i] / size.toDouble() }
 }
