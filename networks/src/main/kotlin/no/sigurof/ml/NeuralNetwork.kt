@@ -61,17 +61,12 @@ class WeightsAndBiases(
 
 }
 
+
 class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
 
-    fun calculateGradient(inputVsOutputs: List<InputVsOutput>): DoubleArray {
-        val gradient = DoubleArray(weightsAndBiases.data.size) { _ -> 0.0 }
-        for (inputVsOutput in inputVsOutputs) {
-            gradient.mutablyAddElementwise(calculateGradient(inputVsOutput));
-        }
-        return gradient;
-    }
 
-    private fun calculateGradient(inputVsOutputs: InputVsOutput): DoubleArray {
+
+    fun calculateGradient(inputVsOutputs: InputVsOutput): DoubleArray {
         val gradient = DoubleArray(weightsAndBiases.data.size) { _ -> 0.0 }
         val activations: List<DoubleArray> = evaluateActivations(inputVsOutputs.input)
 
@@ -197,6 +192,7 @@ class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
         }
         return activations.last()
     }
+
 
 }
 

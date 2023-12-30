@@ -62,7 +62,7 @@ fun plot2x3x2Network() {
     val network = NeuralNetworkBuilder(
         trainingData = realTrainingData,
         hiddenLayerDimensions = listOf(3),
-    ).train()
+    ).trainOld()
     val firstWeights = network.weightsAndBiases.weightsLayers[0]
     val secondWeights = network.weightsAndBiases.weightsLayers[1]
     println("Cost is ${network.calculateCostFunction(realTrainingData)}")
@@ -119,7 +119,7 @@ fun plot2x2Network() {
     val network = NeuralNetworkBuilder(
         trainingData = realTrainingData,
         hiddenLayerDimensions = emptyList(),
-    ).train()
+    ).trainOld()
     println("Cost is ${network.calculateCostFunction(realTrainingData)}")
     DisplayManager.FPS = 60
     DisplayManager.withWindowOpen { window ->
