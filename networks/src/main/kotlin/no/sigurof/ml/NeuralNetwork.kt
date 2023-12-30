@@ -57,7 +57,20 @@ class WeightsAndBiases(
             }
             return weightsLayers
         }
+
+        fun populate(networkConnectionsIn: List<NetworkConnectionInfo>, initMethod: (Int) -> Double): WeightsAndBiases {
+            return WeightsAndBiases(
+                networkConnectionsIn = networkConnectionsIn,
+                initMethod =    initMethod
+            )
+        }
     }
+
+
+    constructor(networkConnectionsIn: List<NetworkConnectionInfo>, initMethod: (Int)-> Double) : this(
+        networkConnectionsIn = networkConnectionsIn,
+        data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod)
+    )
 
 }
 
