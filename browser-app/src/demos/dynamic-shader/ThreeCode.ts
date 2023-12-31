@@ -177,6 +177,7 @@ export function startThree(
             const time = now * 0.001;
 
             if (controls.hasChanged) {
+                console.log("Updating weights and biases");
                 controls.hasChanged = false;
                 const { allWeightsAndBiases } = createLayers(
                     controls.formValues,
@@ -193,12 +194,16 @@ export function startThree(
     animate();
     threeJsInitialized = true;
 
+    const threeJsUUID: string =   Math.random().toString(36).substring(7);
+    console.log(`Three.js ${threeJsUUID} initialized`);
+
     const update = (form: Matrix[]) => {
         controls.formValues = form;
         controls.hasChanged = true;
     };
-
     const tearDown = ()=>{
+        console.log(`Three.js ${threeJsUUID} tearing down`);
+        threeJsInitialized = false;
         billboardMesh.geometry.dispose();
         billboardMesh.material.dispose();
         backgroundMesh.geometry.dispose();
