@@ -32,7 +32,7 @@ const circleData: CircleData[] = mlTrainingData.map((data) => {
         },
     };
 });
-const hiddenLayerDimensions = [3];
+const hiddenLayerDimensions = [3, 3, 3];
 const layerDimensions = [
     mlTrainingData[0].input.length,
     ...hiddenLayerDimensions,
@@ -55,7 +55,12 @@ function calculateWeightsAndBiasesDimensions(
     return numberOfWeights + numberOfBiases;
 }
 
-const weightsAndBiasesDimensions = zipWithNext(layerDimensions).map(
+export type NetworkConnection = {
+    rows: number;
+    cols: number;
+
+}
+const weightsAndBiasesDimensions: NetworkConnection[] = zipWithNext(layerDimensions).map(
     ({ left, right }) => {
         return {
             rows: right,
@@ -263,7 +268,7 @@ export const Demo = () => {
     }, []);
     useEffect(() => {
         if (!threeJsInitialized) {
-            const result = startThree(form, circleData);
+            const result = startThree(form, circleData, weightsAndBiasesDimensions);
             if (result) {
                 threeJsController.current = {
                     update: result.update,
