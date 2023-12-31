@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import circlesVtxSource from "../../three/circles/vertex.shader?raw";
-import circlesFragSource from "../../three/circles/fragment.shader?raw";
+import circlesVtxSource from "./shaders/circles/vertex.shader?raw";
+import circlesFragSource from "./shaders/circles/fragment.shader?raw";
 import networkVtxSource from "./shaders/network/vertex.shader?raw";
 import networkFragSource from "./shaders/network/fragment.shader?raw";
 import { Matrix } from "./Demo.tsx";
@@ -9,10 +9,11 @@ const SQUARE: number[] = [
     -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,
 ];
 
-function createBillboardMesh(
-    aspect: number,
-    circlesInputOutput: { input: number[]; output: number[] }[],
-) {
+export type Color = { r: number; g: number; b: number };
+export type Vec2D = { x: number; y: number };
+export type CircleData = { pos: Vec2D; color: Color };
+
+function createBillboardMesh(aspect: number, circlesInputOutput: CircleData[]) {
     const material = new THREE.RawShaderMaterial({
         glslVersion: THREE.GLSL3,
         vertexShader: circlesVtxSource,
@@ -35,17 +36,17 @@ function createBillboardMesh(
     const circleTranslationsArray = new Float32Array(
         circlesInputOutput.length * 2,
     );
-    circlesInputOutput.forEach(({ input }, index) => {
+    circlesInputOutput.forEach(({ pos }, index) => {
         const positionIndex = index * 2;
-        circleTranslationsArray[positionIndex] = input[0];
-        circleTranslationsArray[positionIndex + 1] = input[1];
+        circleTranslationsArray[positionIndex] = pos.x;
+        circleTranslationsArray[positionIndex + 1] = pos.y;
     });
     const circleColorsArray = new Float32Array(circlesInputOutput.length * 3);
-    circlesInputOutput.forEach(({ output }, index) => {
+    circlesInputOutput.forEach(({ color }, index) => {
         const positionIndex = index * 3;
-        circleColorsArray[positionIndex] = output[0];
-        circleColorsArray[positionIndex + 1] = output[1]; // green channel always zero
-        circleColorsArray[positionIndex + 2] = output[2];
+        circleColorsArray[positionIndex] = color.r;
+        circleColorsArray[positionIndex + 1] = color.g;
+        circleColorsArray[positionIndex + 2] = color.b;
     });
     geometry.setAttribute(
         "translate",
@@ -162,7 +163,7 @@ export let threeJsInitialized = false;
 
 export function startThree(
     startValues: Matrix[],
-    circlesInputOutput: { input: number[]; output: number[] }[],
+    circlesInputOutput: CircleData[],
 ) {
     const sceneInfo = createScene();
     if (!sceneInfo) {

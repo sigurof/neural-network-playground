@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { startThree, threeJsInitialized } from "./ThreeCode.ts";
-import { circlesDataSets as circlesDataSets2, TrainingData } from "./data.ts";
+import { CircleData, startThree, threeJsInitialized } from "./ThreeCode.ts";
+import {
+    circlesDataSets as circlesDataSets2,
+    MLInputOutput,
+    TrainingData,
+} from "./data.ts";
 import { Slider } from "@mui/material";
 import styled from "styled-components";
 import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
@@ -13,12 +17,26 @@ export type Matrix = {
     data: number[][];
 };
 
-const trainingData = circlesDataSets2.nonLinear.circularRegion;
+const mlTrainingData: MLInputOutput[] =
+    circlesDataSets2.nonLinear.circularRegion;
+const circleData: CircleData[] = mlTrainingData.map((data) => {
+    return {
+        pos: {
+            x: data.input[0],
+            y: data.input[1],
+        },
+        color: {
+            r: data.output[0],
+            g: 0,
+            b: data.output[1],
+        },
+    };
+});
 const hiddenLayerDimensions = [3];
 const layerDimensions = [
-    trainingData[0].input.length,
+    mlTrainingData[0].input.length,
     ...hiddenLayerDimensions,
-    trainingData[0].output.length,
+    mlTrainingData[0].output.length,
 ];
 const zipWithNext = (arr: number[]) => {
     const result: { left: number; right: number }[] = [];
@@ -245,7 +263,7 @@ export const Demo = () => {
     }, []);
     useEffect(() => {
         if (!threeJsInitialized) {
-            const result = startThree(form, trainingData);
+            const result = startThree(form, circleData);
             if (result) {
                 threeJsController.current = {
                     update: result.update,
@@ -273,7 +291,7 @@ export const Demo = () => {
             <button
                 onClick={async () => {
                     const result = await train(
-                        trainingData,
+                        mlTrainingData,
                         hiddenLayerDimensions,
                     );
                     const formData = castToSimpleNetworkLayer(result);

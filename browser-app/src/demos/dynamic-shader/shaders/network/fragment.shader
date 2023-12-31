@@ -110,7 +110,7 @@ void main(void){
     float[30] lastLayerActivation = elementwiseSigmoid(lastLayerZ, matrixDimensions[1].x);
     vec3  lastLayer = vec3(lastLayerActivation[0], 0, lastLayerActivation[1]);
 
-    out_Color = vec4(lastLayer.r, lastLayer.g, lastLayer.b, 1.0);
+    out_Color = 0.8*vec4(lastLayer.r, lastLayer.g, lastLayer.b, 1.0);
 
     gl_FragDepth = 0.9;
 }
