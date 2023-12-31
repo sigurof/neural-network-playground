@@ -3,7 +3,7 @@ import circlesVtxSource from "../../three/circles/vertex.shader?raw";
 import circlesFragSource from "../../three/circles/fragment.shader?raw";
 import networkVtxSource from "./shaders/network/vertex.shader?raw";
 import networkFragSource from "./shaders/network/fragment.shader?raw";
-import { Matrix } from "./Demo2x4x3RedGreenBlue.tsx";
+import { Matrix } from "./Demo3x3x3x3RedGreenBlue.tsx";
 
 const SQUARE: number[] = [
     -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,
