@@ -68,7 +68,7 @@ function createBackgroundMesh(aspect: number, startValues: Matrix[]) {
         ),
     );
 
-    const { firstWeights, secondWeights } = createLayers(startValues);
+    const { allWeightsAndBiases } = createLayers(startValues);
 
     const material = new THREE.RawShaderMaterial({
         glslVersion: THREE.GLSL3,
@@ -77,8 +77,7 @@ function createBackgroundMesh(aspect: number, startValues: Matrix[]) {
         depthTest: true,
         uniforms: {
             aspect: { value: aspect },
-            firstWeights: { value: firstWeights },
-            secondWeights: { value: secondWeights },
+            allWeightsAndBiases: { value: allWeightsAndBiases },
         },
     });
     const circleTranslationsArray = new Float32Array(2);
@@ -116,47 +115,18 @@ function createScene() {
 let now,
     delta,
     then = Date.now();
-let fps = 30;
+let fps = 3;
 const interval = 1000 / fps;
 
 function createLayers(networkLayers: Matrix[]): {
-    firstWeights: THREE.Matrix3;
-    secondWeights: THREE.Matrix4;
+    allWeightsAndBiases: Float32Array;
 } {
-    // Populating all fields of the 3x3 matrix
-    const firstWeights = new THREE.Matrix3(
-        networkLayers[0].data[0][0],
-        networkLayers[0].data[0][1],
-        networkLayers[0].data[0][2],
-        networkLayers[0].data[1][0],
-        networkLayers[0].data[1][1],
-        networkLayers[0].data[1][2],
-        networkLayers[0].data[2][0],
-        networkLayers[0].data[2][1],
-        networkLayers[0].data[2][2],
+    const numbers: number[] = networkLayers.flatMap((matrix) =>
+        matrix.data.flatMap((row) => row),
     );
-
-    // only populating 2 first rows of the 4x4 matrix because the last ones are unused
-    const secondWeights = new THREE.Matrix4(
-        networkLayers[1].data[0][0],
-        networkLayers[1].data[0][1],
-        networkLayers[1].data[0][2],
-        networkLayers[1].data[0][3],
-        networkLayers[1].data[1][0],
-        networkLayers[1].data[1][1],
-        networkLayers[1].data[1][2],
-        networkLayers[1].data[1][3],
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-    );
-
-    return { firstWeights, secondWeights };
+    return {
+        allWeightsAndBiases: new Float32Array([...numbers]),
+    };
 }
 
 export let threeJsInitialized = false;
@@ -176,7 +146,6 @@ export function startThree(
     const backgroundMesh = createBackgroundMesh(aspect, startValues);
     scene.add(backgroundMesh);
     const controls = {
-        // 4 weights
         hasChanged: false,
         formValues: startValues,
     };
@@ -186,19 +155,15 @@ export function startThree(
         now = Date.now();
         delta = now - then;
         if (delta > interval) {
-            // update fragMatrix depending on time
             const time = now * 0.001;
 
             if (controls.hasChanged) {
                 controls.hasChanged = false;
-                const { firstWeights, secondWeights } = createLayers(
+                const { allWeightsAndBiases } = createLayers(
                     controls.formValues,
                 );
-                // TODO Set the new values on the uniform here
-                backgroundMesh.material.uniforms.firstWeights.value =
-                    firstWeights;
-                backgroundMesh.material.uniforms.secondWeights.value =
-                    secondWeights;
+                backgroundMesh.material.uniforms.allWeightsAndBiases.value =
+                    allWeightsAndBiases;
             }
 
             then = now - (delta % interval);

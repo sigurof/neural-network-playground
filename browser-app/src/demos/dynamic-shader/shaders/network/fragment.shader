@@ -1,15 +1,10 @@
 precision highp float;
 
-//#define MATRIX_DIMS_MAX_SIZE = 10
-//uniform vec3 weightsAndBiases[MAX_PARAMS];
-
-//uniform int numParams;
 in vec2 coord2d;
 
 out vec4 out_Color;
 
-uniform mat3 firstWeights;// a 3 by 3 matrix (2w + 1 bias, 2w + 1 bias, 2w + 1 bias)
-uniform mat4 secondWeights;// a 2 by 4 matrix (3w + 1 bias, 3w + 1 bias)
+uniform float[20] allWeightsAndBiases;
 
 vec4 elementwiseSigmoid(vec4 v){
     return vec4(
@@ -84,32 +79,25 @@ void main(void){
     matrixDimensions[0] = ivec2(3, 3);
     matrixDimensions[1] = ivec2(3, 4);
 
-
-    // matrices are column-major, so need to take them in transposed order
-    float[20] allWeightsAndBiases = float[](
-    firstWeights[0][0], firstWeights[1][0], firstWeights[2][0],
-    firstWeights[0][1], firstWeights[1][1], firstWeights[2][1],
-    firstWeights[0][2], firstWeights[1][2], firstWeights[2][2],
-    secondWeights[0][0], secondWeights[1][0], secondWeights[2][0], secondWeights[3][0],
-    secondWeights[0][1], secondWeights[1][1], secondWeights[2][1], secondWeights[3][1],
-    0.0, 0.0, 0.0
-    );
-
-
     // First Layer
     vec2 firstLayer = coord2d;
 
-    // Middle Layer
+    // Second Layer (special treatment because uses vec2 type that comes from vertex shader instead of float[])
     float[100] firstWeights = flatMatrix(allWeightsAndBiases, 0, matrixDimensions);
     float[30] secondLayerZ = matrixMult(firstWeights, matrixDimensions[0], firstLayer);// zfirstWeights * vec3(firstLayer, 1);
-    float[30] secondLayerActivation = elementwiseSigmoid(secondLayerZ, matrixDimensions[0].y);
+    float[30] nextLayerActivation = elementwiseSigmoid(secondLayerZ, matrixDimensions[0].y);
 
-    // Last Layer
-    float[100] secondWeights = flatMatrix(allWeightsAndBiases, 1, matrixDimensions);
-    float[30] lastLayerZ = matrixMult(secondWeights, matrixDimensions[1], secondLayerActivation);
-    float[30] lastLayerActivation = elementwiseSigmoid(lastLayerZ, matrixDimensions[1].x);
-    vec3  lastLayer = vec3(lastLayerActivation[0], 0, lastLayerActivation[1]);
+    // Then iterate over all the remaining layers
+    float[100] nextWeights;
+    float[30] nextLayerZ;
+    int remainingWeightMatrices = 2 -1;
+    for (int i = 0; i < remainingWeightMatrices; i++){
+        nextWeights = flatMatrix(allWeightsAndBiases, 1, matrixDimensions);
+        nextLayerZ = matrixMult(nextWeights, matrixDimensions[1], nextLayerActivation);
+        nextLayerActivation = elementwiseSigmoid(nextLayerZ, matrixDimensions[1].x);
+    }
 
+    vec3  lastLayer = vec3(nextLayerActivation[0], 0, nextLayerActivation[1]);
     out_Color = 0.8*vec4(lastLayer.r, lastLayer.g, lastLayer.b, 1.0);
 
     gl_FragDepth = 0.9;
