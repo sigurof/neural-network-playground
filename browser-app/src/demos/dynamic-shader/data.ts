@@ -14,7 +14,7 @@ export const randomlyDistributedPoints = (numberOfCircles: number) =>
     }));
 
 function redUpperRightLinear(x: number, y: number) {
-    return x + y > 0 ? "red" : "blue";
+    return x + y > 0.5 ? "red" : "blue";
 }
 
 function redMiddleCircle(x: number, y: number) {
