@@ -87,12 +87,11 @@ void main(void){
 
     // Second Layer (special treatment because uses vec2 type that comes from vertex shader instead of float[])
 
-    float[50] firstWeights = flatMatrix(allWeightsAndBiases, 0, matrixDimensions);
-    float[30] nextLayerActivation = matrixMult(firstWeights, matrixDimensions[0], firstLayer);// zfirstWeights * vec3(firstLayer, 1);
+    float[50] nextWeights = flatMatrix(allWeightsAndBiases, 0, matrixDimensions);
+    float[30] nextLayerActivation = matrixMult(nextWeights, matrixDimensions[0], firstLayer);// zfirstWeights * vec3(firstLayer, 1);
     nextLayerActivation = elementwiseSigmoid(nextLayerActivation, matrixDimensions[0].x);
 
     // Then iterate over all the remaining layers
-    float[50] nextWeights;
 //    float[30] nextLayerZ;
 //    int remainingWeightMatrices = numberOfMatrices -1;
     for (int i = 1; i < numberOfMatrices; i++){

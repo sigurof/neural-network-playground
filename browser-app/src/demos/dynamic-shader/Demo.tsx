@@ -33,7 +33,7 @@ const circleData: CircleData[] = mlTrainingData.map((data) => {
         },
     };
 });
-const hiddenLayerDimensions: number[] = [3];
+const hiddenLayerDimensions: number[] = [4, 5];
 const layerDimensions = [
     mlTrainingData[0].input.length,
     ...hiddenLayerDimensions,
