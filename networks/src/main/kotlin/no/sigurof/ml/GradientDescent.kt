@@ -16,7 +16,7 @@ fun gradientDescent(
     var derivative = gradientFunction.invoke(0, coordinate)
     var steps = 0
     val d = 0.000003
-    while (derivative.length() > d && steps < 10000) {
+    while (derivative.length() > d && steps < 5000) {
         println("steps = $steps, derivative = ${derivative.length()}")
         iterationCallback?.invoke(steps, coordinate, 0.0)
         val newCoordinate = DoubleArray(size = coordinate.size)

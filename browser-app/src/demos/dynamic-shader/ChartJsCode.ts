@@ -6,7 +6,6 @@ export let chartInitialized = false;
 
 export const startChartJs = () => {
     chartInitialized = true;
-    console.log("startChartJs");
     const ctx = document.getElementById("chartCanvas");
     if (!ctx) {
         return;
@@ -60,5 +59,8 @@ export const startChartJs = () => {
     };
     return {
         updateChart,
+        destroy: ()=>{
+            chart.destroy();
+        }
     };
 };
