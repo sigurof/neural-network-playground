@@ -18,8 +18,10 @@ import no.sigurof.ml.NeuralNetwork
 import no.sigurof.ml.NeuralNetworkBuilder
 import no.sigurof.ml.Record
 import no.sigurof.ml.WeightsAndBiases
+import no.sigurof.ml.XY
 import no.sigurof.models.MatrixDto
 import no.sigurof.models.NeuralNetworkParams
+import no.sigurof.routes.model.WeightsInput
 
 
 @Serializable
@@ -33,13 +35,6 @@ fun Route.machineLearningRouting() {
         call.respondText("Hello World!")
     }
 
-    // The first step is to get the backend to return a trained neural network based on a few parameters:
-    /*
-    * - the training data, defined as an array of pairs of input output arrays
-    *   - this gives us the desired input/output dimensions of the network
-    * - the dimensions of hidden layers
-    * */
-
     post("/ml/network") {
         val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>();
         val includeProfiling = call.request.queryParameters["includeProfiling"]?.toBoolean() ?: false
@@ -49,23 +44,14 @@ fun Route.machineLearningRouting() {
         call.respond(MlResponse(layers = weights, record = neuralNetworkBuilder.record))
     }
 
-    @Serializable
-    class FrontendMatrix (
-        val rows: Int,
-        val columns: Int,
-        val data: List<List<Double>>
-    )
 
-    // An endpoint which accepts a List<MatrixDto>
-    // it returns a 100x100 png where every pixel is the result of evaluating the values of the neural network
-    // for the given input
     post("/ml/evaluate") {
-        val matrices = call.receive<List<FrontendMatrix>>()
+        val weightsInput = call.receive<List<WeightsInput>>()
         val neuralNetwork = NeuralNetwork(WeightsAndBiases(
-            data = matrices.flatMap { it.data.flatten() }.toDoubleArray(),
-            networkConnectionsIn = matrices.map {
+            data = weightsInput.flatMap { it.data.flatten() }.toDoubleArray(),
+            networkConnectionsIn = weightsInput.map {
                 NetworkConnectionInfo(
-                    inputs = it.columns -1,
+                    inputs = it.columns - 1,
                     outputs = it.rows,
                 )
             }
@@ -81,7 +67,7 @@ fun Route.machineLearningRouting() {
         val image = BufferedImage(xPixels, yPixels, BufferedImage.TYPE_INT_RGB)
         for (x in 0 until xPixels) {
             for (y in 0 until yPixels) {
-                val actualY =  yPixels - y - 1
+                val actualY = yPixels - y - 1
                 val xValue = startX + xStep * x
                 val yValue = startY + yStep * actualY
 
@@ -96,7 +82,6 @@ fun Route.machineLearningRouting() {
                 image.setRGB(x, y, color.rgb)
             }
         }
-        // convert image to bytes and respond
         val outputStream = ByteArrayOutputStream()
         javax.imageio.ImageIO.write(image, "png", outputStream)
         val bytes = outputStream.toByteArray()

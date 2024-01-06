@@ -14,7 +14,6 @@ fun startKtorServer(){
 }
 fun Application.module() {
     install(CORS) {
-        // The methods for your server routes
         allowMethod(HttpMethod.Options)
         allowMethod(HttpMethod.Put)
         allowMethod(HttpMethod.Post)
@@ -24,7 +23,7 @@ fun Application.module() {
         allowHeader(HttpHeaders.AccessControlAllowOrigin) // Explicitly allow this header
         allowCredentials = true
         allowNonSimpleContentTypes = true
-        anyHost() // or allowHost(yourHost)
+        anyHost()
     }
     configureRouting()
     configureSerialization()
