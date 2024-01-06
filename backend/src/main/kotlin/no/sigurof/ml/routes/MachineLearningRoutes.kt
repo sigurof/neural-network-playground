@@ -1,33 +1,28 @@
-package no.sigurof.routes
+package no.sigurof.ml.routes
 
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
-import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
-import no.sigurof.ml.Matrix
-import no.sigurof.ml.NetworkConnectionInfo
-import no.sigurof.ml.NeuralNetworkBuilder
-import no.sigurof.ml.WeightsAndBiases
+import no.sigurof.ml.neuralnetwork.NetworkConnectionInfo
+import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
+import no.sigurof.ml.neuralnetwork.WeightsAndBiases
+import no.sigurof.ml.utils.Matrix
 
 fun Route.machineLearningRouting() {
-    get("/") {
-        call.respondText("Hello World!")
-    }
-
     post("/ml/network") {
         val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>()
         val shouldRecordCostFunction = call.request.queryParameters["recordCostFunction"]?.toBoolean() ?: false
         val trainingResult =
             NeuralNetworkBuilder(neuralNetworkParams)
                 .trainNew(shouldRecordCostFunction)
-        call.respond(trainingResult.toTrainedNeuralNetworkResponse())
+        call.respond(trainingResult.toResponse())
     }
 
     post("/ml/evaluate") {
@@ -77,7 +72,7 @@ fun Route.machineLearningRouting() {
     }
 }
 
-private fun NeuralNetworkBuilder.TrainingResult.toTrainedNeuralNetworkResponse(): TrainedNeuralNetworkResponse {
+private fun NeuralNetworkBuilder.TrainingResult.toResponse(): TrainedNeuralNetworkResponse {
     val weights: List<MatrixDto> =
         weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
     return TrainedNeuralNetworkResponse(layers = weights, record = record)

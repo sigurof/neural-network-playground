@@ -1,4 +1,4 @@
-package no.sigurof
+package no.sigurof.ml.server
 
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
@@ -7,8 +7,8 @@ import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.cors.routing.CORS
-import no.sigurof.plugins.configureRouting
-import no.sigurof.plugins.configureSerialization
+import no.sigurof.ml.server.plugins.configureRouting
+import no.sigurof.ml.server.plugins.configureSerialization
 
 fun startKtorServer() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
