@@ -2,7 +2,7 @@ package no.sigurof.ml
 
 import kotlin.random.Random
 import kotlinx.serialization.Serializable
-import no.sigurof.models.NeuralNetworkParams
+import no.sigurof.routes.NeuralNetworkParams
 
 @Serializable
 data class InputVsOutput(
@@ -51,12 +51,9 @@ class NeuralNetworkBuilder(
     private val trainingDataChunks: List<List<InputVsOutput>> = trainingData.chunked(100)
 
     fun populateWeightsAndBiasesRaw(initMethod: (Int) -> Double) =
-        NeuralNetwork(
-            weightsAndBiases =
-                WeightsAndBiases.populate(
-                    networkConnectionsIn = networkConnections,
-                    initMethod = initMethod
-                )
+        WeightsAndBiases.populate(
+            networkConnectionsIn = networkConnections,
+            initMethod = initMethod
         )
 
     fun trainOld(recordCostFunction: Boolean = false): TrainingResult =
@@ -66,7 +63,7 @@ class NeuralNetworkBuilder(
         )
 
     class TrainingResult(
-        val neuralNetwork: NeuralNetwork,
+        val weightsAndBiases: WeightsAndBiases,
         val record: List<Record>,
     )
 
@@ -75,7 +72,7 @@ class NeuralNetworkBuilder(
 
     private fun train(
         recordCostFunction: Boolean = false,
-        gradientFunction: (NeuralNetwork, List<InputVsOutput>) -> DoubleArray,
+        gradientFunction: (WeightsAndBiases, List<InputVsOutput>) -> DoubleArray,
     ): TrainingResult {
         val record = mutableListOf<Record>()
         val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
@@ -96,12 +93,10 @@ class NeuralNetworkBuilder(
                     }
                 }
             )
-        val neuralNetwork =
-            NeuralNetwork(
-                weightsAndBiases(costFunctionMin)
-            )
+        val weightsAndBiases =
+            weightsAndBiases(costFunctionMin)
         return TrainingResult(
-            neuralNetwork = neuralNetwork,
+            weightsAndBiases = weightsAndBiases,
             record = record
         )
     }
@@ -109,25 +104,24 @@ class NeuralNetworkBuilder(
     private operator fun DoubleArray.div(size: Double): DoubleArray = DoubleArray(this.size) { i -> this[i] / size }
 
     fun calculateGradientInefficiently(
-        neuralNetwork: NeuralNetwork,
+        weightsAndBiases: WeightsAndBiases,
         trainingDataChunk: List<InputVsOutput>,
     ): DoubleArray {
-        val weightsDimensions = neuralNetwork.weightsAndBiases.weightsLayers.sumOf { it.matrix.data.size }
-        val functionValue = neuralNetwork.calculateCostFunction(trainingDataChunk)
+        val weightsDimensions = weightsAndBiases.weightsLayers.sumOf { it.matrix.data.size }
+        val functionValue = weightsAndBiases.calculateCostFunction(trainingDataChunk)
         val delta = 0.0001
         val derivative = DoubleArray(weightsDimensions) { 10.0 }
-        val weightsVector = neuralNetwork.weightsAndBiases.data
+        val weightsVector = weightsAndBiases.data
         for (index in 0 until weightsDimensions) {
             val functionValueIncr =
-                NeuralNetwork(
-                    weightsAndBiases(weightsVector.increment(index, delta))
-                ).calculateCostFunction(trainingDataChunk)
+                weightsAndBiases(weightsVector.increment(index, delta))
+                    .calculateCostFunction(trainingDataChunk)
             derivative[index] = (functionValueIncr - functionValue) / delta
         }
         return derivative
     }
 
-    fun buildNetwork(data: DoubleArray): NeuralNetwork = NeuralNetwork(weightsAndBiases(data))
+    fun buildNetwork(data: DoubleArray): WeightsAndBiases = weightsAndBiases(data)
 
     private fun weightsAndBiases(data: DoubleArray) =
         WeightsAndBiases(
@@ -136,33 +130,33 @@ class NeuralNetworkBuilder(
         )
 
     fun calculateGradientBackpropagationNew(
-        network: NeuralNetwork,
+        weightsAndBiases: WeightsAndBiases,
         trainingData: List<InputVsOutput>,
     ): DoubleArray {
-        val gradient = DoubleArray(network.weightsAndBiases.data.size) { _ -> 0.0 }
+        val gradient = DoubleArray(weightsAndBiases.data.size) { _ -> 0.0 }
         for (inputOutput in trainingData) {
-            val partGradient: DoubleArray = calculateGradientOfSample(network, inputOutput)
+            val partGradient: DoubleArray = calculateGradientOfSample(weightsAndBiases, inputOutput)
             gradient.mutablyAddElementwise(partGradient)
         }
         return gradient / trainingData.size.toDouble()
     }
 
     private fun calculateGradientOfSample(
-        network: NeuralNetwork,
+        weightsAndBiases: WeightsAndBiases,
         inputOutput: InputVsOutput,
     ): DoubleArray {
-        val activations: List<DoubleArray> = network.evaluateActivations(inputOutput.input)
-        val theSumOverI = DoubleArray(network.weightsAndBiases.data.size) { _ -> 0.0 }
-        for (activationIndex in 0 until network.weightsAndBiases.weightsLayers.last().outputs) {
+        val activations: List<DoubleArray> = weightsAndBiases.evaluateActivations(inputOutput.input)
+        val theSumOverI = DoubleArray(weightsAndBiases.data.size) { _ -> 0.0 }
+        for (activationIndex in 0 until weightsAndBiases.weightsLayers.last().outputs) {
             val activationI = activations.last()[activationIndex]
             val activationIMinusExpectedValue: Double = activationI - inputOutput.output[activationIndex]
             val gradientOfActivationI: DoubleArray =
                 calculateActivationGradient(
-                    network,
+                    weightsAndBiases,
                     activations.dropLast(1),
                     activationIndex,
                     activationI,
-                    network.weightsAndBiases.weightsLayers.lastIndex
+                    weightsAndBiases.weightsLayers.lastIndex
                 )
             theSumOverI.mutablyAddElementwise(activationIMinusExpectedValue * gradientOfActivationI)
         }
@@ -170,28 +164,29 @@ class NeuralNetworkBuilder(
     }
 
     private fun calculateActivationGradient(
-        network: NeuralNetwork,
+        weightsAndBiases: WeightsAndBiases,
         activations: List<DoubleArray>,
         activationIndex: Int,
         activation: Double,
         weightLayerIndex: Int,
     ): DoubleArray {
         val sigmoidPrime: Double = activation * (1.0 - activation)
-        val gradientOfZ: DoubleArray = calculateGradientOfZ(network, activations, activationIndex, weightLayerIndex)
+        val gradientOfZ: DoubleArray =
+            calculateGradientOfZ(weightsAndBiases, activations, activationIndex, weightLayerIndex)
         return sigmoidPrime * gradientOfZ
     }
 
     private fun calculateGradientOfZ(
-        network: NeuralNetwork,
+        weightsAndBiases: WeightsAndBiases,
         activations: List<DoubleArray>,
         activationIndex: Int,
         weightLayerIndex: Int,
     ): DoubleArray {
-        val gradientOfZ = DoubleArray(network.weightsAndBiases.data.size) { _ -> 0.0 }
+        val gradientOfZ = DoubleArray(weightsAndBiases.data.size) { _ -> 0.0 }
 
         // Own Bias
-        val numCols = network.weightsAndBiases.weightsLayers[weightLayerIndex].matrix.cols
-        val currentWeightMatrixStartIndex = network.weightsAndBiases.weightsLayers[weightLayerIndex].startIndex
+        val numCols = weightsAndBiases.weightsLayers[weightLayerIndex].matrix.cols
+        val currentWeightMatrixStartIndex = weightsAndBiases.weightsLayers[weightLayerIndex].startIndex
         val currentWeightMatrixRowStartIndex = currentWeightMatrixStartIndex + activationIndex * numCols
         val biasIndex = currentWeightMatrixRowStartIndex + numCols - 1
         gradientOfZ[biasIndex] = 1.0
@@ -207,10 +202,10 @@ class NeuralNetworkBuilder(
             for (j in 0 until activations.last().size) {
                 val activationJ = activations.last()[j]
                 val weightIndex = currentWeightMatrixRowStartIndex + j
-                val weight = network.weightsAndBiases.data[weightIndex]
+                val weight = weightsAndBiases.data[weightIndex]
                 val gradientOfActivation: DoubleArray =
                     calculateActivationGradient(
-                        network,
+                        weightsAndBiases,
                         activations.dropLast(1),
                         j,
                         activationJ,
