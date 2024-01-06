@@ -2,7 +2,7 @@ package no.sigurof.ml
 
 import kotlin.math.sqrt
 
-fun interface Iterationcallback {
+fun interface IterationCallback {
     fun invoke(
         step: Int,
         coordinate: DoubleArray,
@@ -14,7 +14,7 @@ fun gradientDescent(
     learningRate: Double,
     startingCoordinate: DoubleArray,
     gradientFunction: (step: Int, coordinate: DoubleArray) -> DoubleArray,
-    iterationCallback: Iterationcallback? = null,
+    iterationCallback: IterationCallback? = null,
 ): DoubleArray {
     var coordinate = startingCoordinate.copyOf()
     var derivative = gradientFunction.invoke(0, coordinate)
@@ -40,9 +40,7 @@ fun gradientDescent(
 fun DoubleArray.increment(
     index: Int,
     delta: Double,
-): DoubleArray {
-    return DoubleArray(this.size) { i -> if (i == index) this[i] + delta else this[i] }
-}
+): DoubleArray = DoubleArray(this.size) { i -> if (i == index) this[i] + delta else this[i] }
 
 private fun DoubleArray.length(): Double {
     var sum = 0.0

@@ -1,8 +1,8 @@
 package no.sigurof.ml
 
+import kotlin.random.Random
 import kotlinx.serialization.Serializable
 import no.sigurof.models.NeuralNetworkParams
-import kotlin.random.Random
 
 @Serializable
 data class InputVsOutput(
@@ -36,7 +36,7 @@ class NeuralNetworkBuilder(
 ) {
     constructor(hiddenLayerDimensions: NeuralNetworkParams) : this(
         hiddenLayerDimensions = hiddenLayerDimensions.hiddenLayerDimensions,
-        trainingData = hiddenLayerDimensions.trainingData,
+        trainingData = hiddenLayerDimensions.trainingData
     )
 
     private val inputLayer = trainingData.first().input.size
@@ -45,33 +45,33 @@ class NeuralNetworkBuilder(
         listOf(
             listOf(inputLayer),
             hiddenLayerDimensions,
-            listOf(outputLayer),
+            listOf(outputLayer)
         ).flatten()
             .zipWithNext { nThis, nNext -> NetworkConnectionInfo(inputs = nThis, outputs = nNext) }
     private val trainingDataChunks: List<List<InputVsOutput>> = trainingData.chunked(100)
 
-    fun populateWeightsAndBiasesRaw(initMethod: (Int) -> Double): NeuralNetwork {
-        return NeuralNetwork(
+    fun populateWeightsAndBiasesRaw(initMethod: (Int) -> Double) =
+        NeuralNetwork(
             weightsAndBiases =
                 WeightsAndBiases.populate(
                     networkConnectionsIn = networkConnections,
-                    initMethod = initMethod,
-                ),
+                    initMethod = initMethod
+                )
         )
-    }
 
-    fun trainOld(recordCostFunction: Boolean = false): TrainingResult {
-        return train(recordCostFunction, ::calculateGradientInefficiently)
-    }
+    fun trainOld(recordCostFunction: Boolean = false): TrainingResult =
+        train(
+            recordCostFunction,
+            ::calculateGradientInefficiently
+        )
 
     class TrainingResult(
         val neuralNetwork: NeuralNetwork,
         val record: List<Record>,
     )
 
-    fun trainNew(recordCostFunction: Boolean = false): TrainingResult {
-        return train(recordCostFunction = recordCostFunction, gradientFunction = ::calculateGradientBackpropagationNew)
-    }
+    fun trainNew(recordCostFunction: Boolean = false): TrainingResult =
+        train(recordCostFunction = recordCostFunction, gradientFunction = ::calculateGradientBackpropagationNew)
 
     private fun train(
         recordCostFunction: Boolean = false,
@@ -94,21 +94,19 @@ class NeuralNetworkBuilder(
                         val cost = buildNetwork(coordinate).calculateCostFunction(trainingDataChunk)
                         record.add(Record(step = step, cost = cost))
                     }
-                },
+                }
             )
         val neuralNetwork =
             NeuralNetwork(
-                weightsAndBiases(costFunctionMin),
+                weightsAndBiases(costFunctionMin)
             )
         return TrainingResult(
             neuralNetwork = neuralNetwork,
-            record = record,
+            record = record
         )
     }
 
-    private operator fun DoubleArray.div(size: Double): DoubleArray {
-        return DoubleArray(this.size) { i -> this[i] / size }
-    }
+    private operator fun DoubleArray.div(size: Double): DoubleArray = DoubleArray(this.size) { i -> this[i] / size }
 
     fun calculateGradientInefficiently(
         neuralNetwork: NeuralNetwork,
@@ -122,23 +120,20 @@ class NeuralNetworkBuilder(
         for (index in 0 until weightsDimensions) {
             val functionValueIncr =
                 NeuralNetwork(
-                    weightsAndBiases(weightsVector.increment(index, delta)),
+                    weightsAndBiases(weightsVector.increment(index, delta))
                 ).calculateCostFunction(trainingDataChunk)
             derivative[index] = (functionValueIncr - functionValue) / delta
         }
         return derivative
     }
 
-    fun buildNetwork(data: DoubleArray): NeuralNetwork {
-        return NeuralNetwork(weightsAndBiases(data))
-    }
+    fun buildNetwork(data: DoubleArray): NeuralNetwork = NeuralNetwork(weightsAndBiases(data))
 
-    private fun weightsAndBiases(data: DoubleArray): WeightsAndBiases {
-        return WeightsAndBiases(
+    private fun weightsAndBiases(data: DoubleArray) =
+        WeightsAndBiases(
             data = data,
-            networkConnectionsIn = networkConnections,
+            networkConnectionsIn = networkConnections
         )
-    }
 
     fun calculateGradientBackpropagationNew(
         network: NeuralNetwork,
@@ -167,7 +162,7 @@ class NeuralNetworkBuilder(
                     activations.dropLast(1),
                     activationIndex,
                     activationI,
-                    network.weightsAndBiases.weightsLayers.lastIndex,
+                    network.weightsAndBiases.weightsLayers.lastIndex
                 )
             theSumOverI.mutablyAddElementwise(activationIMinusExpectedValue * gradientOfActivationI)
         }
@@ -219,7 +214,7 @@ class NeuralNetworkBuilder(
                         activations.dropLast(1),
                         j,
                         activationJ,
-                        weightLayerIndex - 1,
+                        weightLayerIndex - 1
                     )
                 gradientOfZ.mutablyAddElementwise(weight * gradientOfActivation)
             }
@@ -229,6 +224,4 @@ class NeuralNetworkBuilder(
     }
 }
 
-private operator fun Double.times(doubleArray: DoubleArray): DoubleArray {
-    return doubleArray.map { it * this }.toDoubleArray()
-}
+private operator fun Double.times(doubleArray: DoubleArray): DoubleArray = doubleArray.map { it * this }.toDoubleArray()

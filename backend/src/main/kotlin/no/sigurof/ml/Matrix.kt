@@ -6,9 +6,12 @@ import kotlinx.serialization.Serializable
 class Matrix(val rows: Int, val data: DoubleArray) {
     init {
         require(
-            data.size % rows == 0,
+            data.size % rows == 0
         ) {
-            "Failed to initialize matrix. The number of elements per row must be an integer but was ${data.size}/$rows = ${data.size.toDouble() / rows}."
+            """
+            Failed to initialize matrix. The number of elements per row must be an 
+            integer but was ${data.size}/$rows = ${data.size.toDouble() / rows}.    
+            """.trimIndent()
         }
     }
 
@@ -16,7 +19,7 @@ class Matrix(val rows: Int, val data: DoubleArray) {
 
     constructor(rows: Int, cols: Int, function: (row: Int, col: Int) -> Double) : this(
         rows,
-        DoubleArray(rows * cols) { i -> function.invoke(i / rows, i % cols) },
+        DoubleArray(rows * cols) { i -> function.invoke(i / rows, i % cols) }
     )
 
     constructor(rows: Int, cols: Int) : this(rows, cols, { _, _ -> 0.0 })
@@ -28,9 +31,7 @@ class Matrix(val rows: Int, val data: DoubleArray) {
     operator fun get(
         row: Int,
         col: Int,
-    ): Double {
-        return data[row * cols + col]
-    }
+    ): Double = data[row * cols + col]
 
     operator fun set(
         row: Int,
@@ -42,7 +43,7 @@ class Matrix(val rows: Int, val data: DoubleArray) {
 
     operator fun times(other: DoubleArray): DoubleArray {
         require(
-            other.size == cols,
+            other.size == cols
         ) { "Attempted to multiply a ${rows}x$cols matrix by a ${other.size}x1 column matrix." }
         val result = DoubleArray(rows)
         for (row in 0 until rows) {
@@ -71,9 +72,10 @@ class Matrix(val rows: Int, val data: DoubleArray) {
 
     fun plusRow(matrixRow: DoubleArray): Matrix {
         require(
-            matrixRow.size == cols,
+            matrixRow.size == cols
         ) {
-            "Failed to add row. The number of elements in the row must be equal to the number of columns in the matrix. ${matrixRow.size} != $cols"
+            "Failed to add row. The number of elements in the row must be " +
+                "equal to the number of columns in the matrix. ${matrixRow.size} != $cols"
         }
         val newNumRows = this.rows + 1
         val newData = data.copyOf(cols * newNumRows)
@@ -82,13 +84,18 @@ class Matrix(val rows: Int, val data: DoubleArray) {
         }
         return Matrix(
             rows = newNumRows,
-            data = newData,
+            data = newData
         )
     }
 }
 
-fun matrixOfRows(vararg rows: DoubleArray): Matrix {
-    return Matrix(rows = rows.size, data = rows.flatMap { it.asIterable() }.toDoubleArray())
-}
+fun matrixOfRows(vararg rows: DoubleArray): Matrix =
+    Matrix(
+        rows = rows.size,
+        data =
+            rows.flatMap {
+                it.asIterable()
+            }.toDoubleArray()
+    )
 
 fun matrixRow(vararg values: Double): DoubleArray = values
