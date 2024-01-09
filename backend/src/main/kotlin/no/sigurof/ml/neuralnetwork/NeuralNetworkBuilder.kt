@@ -51,6 +51,7 @@ class NeuralNetworkBuilder(
             listOf(outputLayer)
         ).flatten()
             .zipWithNext { nThis, nNext -> NetworkConnectionInfo(inputs = nThis, outputs = nNext) }
+    private val dimensionality = networkConnections.sumOf { it.weights + it.biases }
     private val trainingDataChunks: List<List<InputVsOutput>> = trainingData.chunked(100)
 
     fun populateWeightsAndBiasesRaw(initMethod: (Int) -> Double) =
@@ -69,7 +70,7 @@ class NeuralNetworkBuilder(
 
     fun trainOld(recordCostFunction: Boolean = false): TrainingResult =
         train(
-            recordCostFunction,
+            recordCostFunction = recordCostFunction,
             ::calculateSimpleGradient
         )
 
@@ -77,11 +78,10 @@ class NeuralNetworkBuilder(
         weightsAndBiases: WeightsAndBiases,
         trainingDataChunk: List<InputVsOutput>,
     ): DoubleArray {
-        val weightsDimensions = weightsAndBiases.weightsLayers.sumOf { it.matrix.data.size }
         val functionValue = weightsAndBiases.calculateCostFunction(trainingDataChunk)
         val delta = 0.0001
-        val derivative = DoubleArray(weightsDimensions) { 10.0 }
-        for (index in 0 until weightsDimensions) {
+        val derivative = DoubleArray(dimensionality) { 10.0 }
+        for (index in 0 until dimensionality) {
             val pointIncr = weightsAndBiases.data.increment(index, delta)
             val functionValueIncr = weightsAndBiases(pointIncr).calculateCostFunction(trainingDataChunk)
             derivative[index] = (functionValueIncr - functionValue) / delta
@@ -91,15 +91,23 @@ class NeuralNetworkBuilder(
 
     private fun train(
         recordCostFunction: Boolean = false,
+//        iterationCallback: (step: Int, coordinate: DoubleArray, functionValue: Double) -> Unit,
         gradientFunction: (WeightsAndBiases, List<InputVsOutput>) -> DoubleArray,
     ): TrainingResult {
         val record = mutableListOf<Record>()
-        val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
+
         var trainingDataChunk: List<InputVsOutput> = trainingDataChunks.first()
+        val iterationCallback: (step: Int, coordinate: DoubleArray, functionValue: Double) -> Unit =
+            { step, coordinate, _ ->
+                if (recordCostFunction && step % 50 == 0) {
+                    val cost = weightsAndBiases(coordinate).calculateCostFunction(trainingDataChunk)
+                    record.add(Record(step = step, cost = cost))
+                }
+            }
         val costFunctionMin =
             GradientDescent.minimize(
                 learningRate = 10.0,
-                startingCoordinate = DoubleArray(weightsDimensions) { Random.nextDouble(-1.0, 1.0) },
+                startingCoordinate = DoubleArray(dimensionality) { Random.nextDouble(-1.0, 1.0) },
                 gradientFunction = { step, weightsVector ->
                     trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
                     gradientFunction(weightsAndBiases(weightsVector), trainingDataChunk)

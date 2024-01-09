@@ -52,10 +52,8 @@ fun Route.machineLearningRouting() {
                 val actualY = yPixels - y - 1
                 val xValue = startX + xStep * x
                 val yValue = startY + yStep * actualY
-
                 val input = doubleArrayOf(xValue, yValue)
                 val output = neuralNetwork.evaluateActivations(input).last()
-
                 val color =
                     Color(
                         (output[0] * 255.0).toInt(),
