@@ -1,7 +1,8 @@
 #version 410 core
 
+uniform mat3 fragMatrix;
+
 in vec2 coord2d;
-in mat3 fragMatrix;
 
 out vec4 out_Color;
 
