@@ -1,8 +1,6 @@
 package no.sigurof.ml
 
 
-private typealias Array1 = DoubleArray
-
 class Matrix(val rows: Int, val data: DoubleArray) {
     init {
         require(
@@ -30,8 +28,11 @@ class Matrix(val rows: Int, val data: DoubleArray) {
         data[row * cols + col] = value
     }
 
-    operator fun times(other: Array1): Array1 {
-        val result = Array1(rows)
+    operator fun times(other: DoubleArray): DoubleArray {
+        require(
+            other.size == cols,
+            { "Attempted to multiply a ${rows}x${cols} matrix by a ${other.size}x1 column matrix." })
+        val result = DoubleArray(rows)
         for (row in 0 until rows) {
             var sum = 0.0
             for (col in 0 until cols) {
