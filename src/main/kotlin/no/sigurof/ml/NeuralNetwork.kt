@@ -15,13 +15,12 @@ private fun DoubleArray.concat(i: Int): DoubleArray {
 
 class NeuralNetwork(val weights: List<Matrix>) {
 
-    constructor() : this(
-        listOf<Int>(
-            2,
-            4,
-            2
-        ).zipWithNext { a, b -> randomArray2(rows = b, cols = (a + 1)) }) {
-    }
+//    constructor() : this(
+//        listOf<Int>(
+//            2,
+//            2
+//        ).zipWithNext { a, b -> randomArray2(rows = b, cols = (a + 1)) }) {
+//    }
 
     internal fun calculateCostFunction(trainingData: List<PosVsColor>): Double {
         return trainingData.map { trainingDataPoint: PosVsColor ->
@@ -31,7 +30,7 @@ class NeuralNetwork(val weights: List<Matrix>) {
             for (i in outputVector.indices) {
                 error += (outputVector[i] - expected[i]).pow(2)
             }
-            sqrt(error)
+            error
         }.average()
     }
 

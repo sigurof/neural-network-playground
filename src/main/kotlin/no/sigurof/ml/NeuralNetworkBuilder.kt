@@ -1,7 +1,6 @@
 package no.sigurof.ml
 
 import no.sigurof.no.sigurof.ml.PosVsColor
-import no.sigurof.ml.gradientDescent
 
 
 class NeuralNetworkBuilder(
@@ -14,7 +13,6 @@ class NeuralNetworkBuilder(
     fun train(trainingData: List<PosVsColor>): NeuralNetwork {
         val weightsDimensions = randomizedWeights.sumOf { it.rows * it.cols }
         val costFunctionMin = gradientDescent(n = weightsDimensions) { weightsVector ->
-
             NeuralNetwork(weightsVector.toMatrices(randomizedWeights))
                 .calculateCostFunction(trainingData)
         }
