@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import circlesVtxSource from "../../three/circles/vertex.shader?raw";
-import circlesFragSource from "../../three/circles/fragment.shader?raw";
+import circlesVtxSource from "../../common/shaders/circles/vertex.shader?raw";
+import circlesFragSource from "../../common/shaders/circles/fragment.shader?raw";
 // import networkVtxSource from "../../three/network/vertex.shader?raw";
 // import networkFragSource from "../../three/network/fragment.shader?raw";
 import networkVtxSource from "./shaders/network/vertex.shader?raw";
