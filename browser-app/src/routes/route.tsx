@@ -5,11 +5,13 @@ import Contact from "./Contact.tsx";
 import { Demo2x2RedBlue } from "../demos/2x2/Demo2x2RedBlue.tsx";
 import { Demo2x3x2RedAndBlue } from "../demos/2x3x2/Demo2x3x2RedAndBlue.tsx";
 import React from "react";
-import { Demo3x3x3x3RedGreenBlue } from "../demos/2x4x3/Demo3x3x3x3RedGreenBlue.tsx";
+import { Demo as Demo4Layers } from "../demos/2x3x3x3/Demo.tsx";
+import {Demo as DemoDynamicShader} from "../demos/dynamic-shader/Demo.tsx";
 
 const path22 = "/ml/demos/22";
 const path232 = `/ml/demos/232`;
-const path3333 = "/ml/demos/3333";
+const path4Layers = "/ml/demos/2333";
+const pathDynamicShader = "/ml/demos/dynamic-demo"
 export const routes = [
     {
         path: "/",
@@ -31,8 +33,13 @@ export const routes = [
                 errorElement: <ErrorPage />,
             },
             {
-                path: path3333,
-                element: <Demo3x3x3x3RedGreenBlue />,
+                path: path4Layers,
+                element: <Demo4Layers />,
+                errorElement: <ErrorPage />,
+            },
+            {
+                path: pathDynamicShader,
+                element: <DemoDynamicShader />,
                 errorElement: <ErrorPage />,
             },
         ],
@@ -61,8 +68,13 @@ export default function Root() {
                                 <Link to={path232}>2x3x2 Red/Blue Demo</Link>
                             </li>
                             <li>
-                                <Link to={path3333}>
-                                    3x3x3x3 Red/Green/Blue Demo
+                                <Link to={path4Layers}>
+                                    2x3x3x3 Red/Green/Blue Demo
+                                </Link>
+                            </li>
+                            <li>
+                                <Link to={pathDynamicShader}>
+                                    Dynamic 2x3x2 Red/Blue Demo
                                 </Link>
                             </li>
                         </ul>

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { startThree, threeJsInitialized } from "./ThreeCode.ts";
-import { circlesDataSets } from "./data3d.ts";
-import { TrainingData } from "./data.ts";
+import { circlesDataSets as circlesDataSets2, TrainingData } from "./data.ts";
 import { Slider } from "@mui/material";
 import styled from "styled-components";
 import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
@@ -14,8 +13,8 @@ export type Matrix = {
     data: number[][];
 };
 
-const trainingData: TrainingData = circlesDataSets.nonLinear.redGreenBlue;
-const hiddenLayerDimensions = [3, 3];
+const trainingData = circlesDataSets2.nonLinear.circularRegion;
+const hiddenLayerDimensions = [3];
 const layerDimensions = [
     trainingData[0].input.length,
     ...hiddenLayerDimensions,
@@ -223,11 +222,10 @@ const ChartContainer = styled.div`
     grid-column-start: 2;
 `;
 
-export const Demo3x3x3x3RedGreenBlue = () => {
+export const Demo = () => {
     const [form, setForm] = useState<Matrix[]>(initialState);
-    const controls = useRef<{
-        hasChanged: boolean;
-        formValues: Matrix[];
+    const threeJsController = useRef<{
+        update: (form: Matrix[]) => void;
     } | null>(null);
     const chartUpdater = useRef<{
         update: (points: { x: number; y: number }[]) => void;
@@ -235,14 +233,13 @@ export const Demo3x3x3x3RedGreenBlue = () => {
 
     function handleFormChange(form: Matrix[]) {
         setForm(form);
-        controls.current!.formValues = form;
-        controls.current!.hasChanged = true;
+        threeJsController.current!.update(form);
     }
 
     useEffect(() => {
         if (!chartInitialized) {
             chartUpdater.current = {
-                update: startChartJs()!.updateChart
+                update: startChartJs()!.updateChart,
             };
         }
     }, []);
@@ -250,7 +247,9 @@ export const Demo3x3x3x3RedGreenBlue = () => {
         if (!threeJsInitialized) {
             const result = startThree(form, trainingData);
             if (result) {
-                controls.current = result.controls;
+                threeJsController.current = {
+                    update: result.update,
+                };
             }
         }
     }, []);
@@ -279,13 +278,12 @@ export const Demo3x3x3x3RedGreenBlue = () => {
                     );
                     const formData = castToSimpleNetworkLayer(result);
                     const statistics = castToStats(result);
+                    handleFormChange(formData);
                     chartUpdater.current!.update(
                         statistics.map((stat) => {
                             return { x: stat.step, y: stat.cost };
                         }),
                     );
-
-                    handleFormChange(formData);
                 }}
             >
                 Train!
