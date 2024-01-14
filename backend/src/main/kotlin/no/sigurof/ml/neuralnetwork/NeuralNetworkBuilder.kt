@@ -130,4 +130,22 @@ class NeuralNetworkBuilder(
             data = data,
             networkConnectionsIn = networkConnections
         )
+
+    fun trainNew2(iterationCallback: (step: Int, network: WeightsAndBiases) -> Unit): WeightsAndBiases {
+        val costFunctionMin =
+            GradientDescent.minimize(
+                learningRate = 10.0,
+                startingCoordinate = DoubleArray(dimensionality) { Random.nextDouble(-1.0, 1.0) },
+                gradientFunction = { step, weightsVector ->
+                    val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
+                    BackPropagation.calculateGradient(weightsAndBiases(weightsVector), trainingDataChunk)
+                },
+                iterationCallback = { step, coordinate, _ ->
+                    val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
+                    val weightsAndBiases = weightsAndBiases(coordinate)
+                    iterationCallback.invoke(step, weightsAndBiases)
+                }
+            )
+        return weightsAndBiases(costFunctionMin)
+    }
 }
