@@ -2,20 +2,28 @@ package no.sigurof.routes
 
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
+import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.NeuralNetwork
 import no.sigurof.ml.NeuralNetworkBuilder
-import no.sigurof.ml.WeightsAndBiases
+import no.sigurof.ml.Record
 import no.sigurof.models.MatrixDto
 import no.sigurof.models.NeuralNetworkParams
 
+
+@Serializable
+data class MlResponse(
+    val layers: List<MatrixDto>,
+    val record: List<Record>,
+) {}
 
 fun Route.machineLearningRouting() {
     get("/") {
@@ -30,16 +38,18 @@ fun Route.machineLearningRouting() {
     * */
 
     post("/ml/network") {
-        val params: NeuralNetworkParams = call.receive<NeuralNetworkParams>();
-        println("Received the following: ${Json.encodeToString(params)}")
-        val firstLayer = params.trainingData.first().input.size
-        val lastLayer = params.trainingData.first().output.size
-        val neuralNetwork: NeuralNetwork = NeuralNetworkBuilder(
-            trainingData = params.trainingData,
-            hiddenLayerDimensions = params.hiddenLayerDimensions
-        ).train()
+        val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>();
+        val includeProfiling = call.request.queryParameters["includeProfiling"]?.toBoolean() ?: false
+        val firstLayer = neuralNetworkParams.trainingData.first().input.size
+        val lastLayer = neuralNetworkParams.trainingData.first().output.size
+        val neuralNetworkBuilder = NeuralNetworkBuilder(
+            trainingData = neuralNetworkParams.trainingData,
+            hiddenLayerDimensions = neuralNetworkParams.hiddenLayerDimensions
+        )
+        val neuralNetwork: NeuralNetwork = neuralNetworkBuilder.train(includeProfiling = includeProfiling)
+
         val weights: List<MatrixDto> = neuralNetwork.weightsAndBiases.layers.map { it.matrix.toMatrixDto() }
-        call.respond(weights)
+        call.respond(MlResponse(layers = weights, record = neuralNetworkBuilder.record))
     }
 }
 

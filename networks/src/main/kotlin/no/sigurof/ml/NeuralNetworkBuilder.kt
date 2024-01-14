@@ -1,6 +1,7 @@
 package no.sigurof.ml
 
 import kotlinx.serialization.Serializable
+import no.sigurof.ml.Record
 
 
 @Serializable
@@ -24,10 +25,17 @@ class NetworkConnectionInfo(
         get() = inputs + 1 // +1 for the bias
 }
 
+@Serializable
+class Record(
+    val step: Int,
+    val cost: Double,
+)
+
 class NeuralNetworkBuilder(
     hiddenLayerDimensions: List<Int>,
     private val trainingData: List<InputVsOutput>,
 ) {
+    val record = mutableListOf<Record>()
 
     private val inputLayer = trainingData.first().input.size
     private val outputLayer = trainingData.first().output.size
@@ -39,13 +47,18 @@ class NeuralNetworkBuilder(
         ).flatten()
             .zipWithNext { nThis, nNext -> NetworkConnectionInfo(inputs = nThis, outputs = nNext) }
 
-    fun train(): NeuralNetwork {
+    fun train(includeProfiling: Boolean = false): NeuralNetwork {
         val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
-        val costFunctionMin = gradientDescentOld(n = weightsDimensions) { weightsVector ->
-            NeuralNetwork(
-                weightsAndBiases(weightsVector)
-            ).calculateCostFunction(trainingData)
-        }
+        val costFunctionMin = gradientDescentOld(n = weightsDimensions,
+            costFuncion = { weightsVector ->
+                NeuralNetwork(
+                    weightsAndBiases(weightsVector)
+                ).calculateCostFunction(trainingData)
+            },
+            iterationCallback = { step, coordinate, functionValue ->
+                record.add(Record(step = step, cost = functionValue))
+            }
+        )
         return NeuralNetwork(
             weightsAndBiases(costFunctionMin)
         )
