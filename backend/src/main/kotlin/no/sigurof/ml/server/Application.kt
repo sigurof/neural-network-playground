@@ -19,10 +19,10 @@ import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.sin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
@@ -82,20 +82,16 @@ data class Session(
 @Serializable
 sealed class ServerEvent {
     @Serializable
-    @SerialName("Update")
-    data class Update(val message: String) : ServerEvent()
+    data class Update(val message: String, val cost: Double) : ServerEvent()
 
     @Serializable
-    @SerialName("AskSetModel")
     data object AskSetModel : ServerEvent()
 
     @Serializable
-    @SerialName("ConfirmSetModel")
-    data object ConfirmSetModel : ServerEvent()
+    data object Complete : ServerEvent()
 
     @Serializable
-    @SerialName("complete")
-    data object Complete : ServerEvent()
+    data class ClientError(val message: String) : ServerEvent()
 }
 
 @Serializable
@@ -107,7 +103,6 @@ sealed class ClientEvent {
     }
 
     @Serializable
-    @SerialName("Continue")
     data class Continue(override val sessionId: String) : ClientEvent() {
         init {
             assertSessionIdNotBlank()
@@ -115,7 +110,6 @@ sealed class ClientEvent {
     }
 
     @Serializable
-    @SerialName("NewModel")
     data class NewModel(
         override val sessionId: String,
         val override: Boolean = false,
@@ -138,8 +132,9 @@ val mySerializersModule =
         polymorphic(ServerEvent::class) {
             subclass(ServerEvent.Update::class)
             subclass(ServerEvent.AskSetModel::class)
-            subclass(ServerEvent.ConfirmSetModel::class)
+//            subclass(ServerEvent.ConfirmSetModel::class)
             subclass(ServerEvent.Complete::class)
+            subclass(ServerEvent.ClientError::class)
         }
     }
 
@@ -148,15 +143,16 @@ val json = Json { serializersModule = mySerializersModule }
 fun expensiveCalculationFlow(event: ClientEvent): Flow<ServerEvent> =
     flow {
         val state = sessions.getOrPut(event.sessionId) { Session(false, 0, "", true, Model()) }
-        emit(ServerEvent.Update("Starting!"))
-        for (i in (state.progress + 1)..60) {
-            delay(3000)
+        emit(ServerEvent.Update("Starting!", 0.0))
+        for (i in (state.progress + 1)..6000) {
+            delay(300)
             val update = "Update $i of 60"
             state.progress = i
             state.result = update
-            emit(ServerEvent.Update(update))
+            val sinT = sin(i.toDouble() / 5.0)
+            emit(ServerEvent.Update(update, sinT))
         }
-        emit(ServerEvent.Update("Calculation Result"))
+        emit(ServerEvent.Update("Calculation Result", 7.0))
         state.result = "Calculation Result"
     }
 
@@ -169,8 +165,13 @@ fun onClientDisconnected(sessionId: String?) {
     }
 }
 
-fun deserializeEvent(text: String): ClientEvent {
-    return json.decodeFromString(ClientEvent.serializer(), text)
+suspend fun WebSocketServerSession.deserializeEvent(text: String): ClientEvent? {
+    try {
+        return json.decodeFromString(ClientEvent.serializer(), text)
+    } catch (e: IllegalArgumentException) {
+        sendServerEvent(ServerEvent.ClientError("Invalid session ID: ${e.message}"))
+        return null
+    }
 }
 
 suspend fun WebSocketServerSession.sendServerEvent(data: ServerEvent) {
@@ -215,14 +216,16 @@ fun Route.webSocketRouting() {
                 val frame = incoming.receive() // Receive incoming frame
                 if (frame is Frame.Text) {
                     val text = frame.readText()
-                    val event = deserializeEvent(text)
-                    sessionId = event.sessionId
-                    when (event) {
-                        is ClientEvent.NewModel -> handleNewModel(event)
-                        is ClientEvent.Continue -> handleContinueWithModel(event)
-                        else -> error("Unknown event $event")
+                    deserializeEvent(text)
+                        ?.let { event ->
+                            sessionId = event.sessionId
+                            when (event) {
+                                is ClientEvent.NewModel -> handleNewModel(event)
+                                is ClientEvent.Continue -> handleContinueWithModel(event)
+                                else -> error("Unknown event $event")
 //                        }
-                    }
+                            }
+                        }
                 }
             }
         } catch (e: Exception) {

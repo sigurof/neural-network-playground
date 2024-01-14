@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { Ref, RefObject, useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { Box, Button, CircularProgress, MenuItem, Select, Slider, TextField, Typography } from "@mui/material";
+import { Button, CircularProgress, MenuItem, Select, Slider, TextField, Typography } from "@mui/material";
 import { SectionBox } from "../Common.tsx";
 import styled from "styled-components";
 import { styled as muiStyled } from "@mui/material/styles";
@@ -38,16 +38,30 @@ const LargeButton = muiStyled(Button)(({ theme }: { theme: any }) => ({
     fontSize: "1.2rem",
 }));
 
+const CLIENT_EVENT_BASE = "no.sigurof.ml.server.ClientEvent";
+const SERVER_EVENT_BASE = "no.sigurof.ml.server.ServerEvent";
+
+const serverEvents = {
+    askSetModel: `${SERVER_EVENT_BASE}.AskSetModel`,
+    update: `${SERVER_EVENT_BASE}.Update`,
+    clientError: `${SERVER_EVENT_BASE}.ClientError`,
+};
+
+const clientEvents = {
+    continue: `${CLIENT_EVENT_BASE}.Continue`,
+    newModel: `${CLIENT_EVENT_BASE}.NewModel`,
+};
+
 function continueEvent(sessionId: string): string {
     return JSON.stringify({
-        type: "Continue",
+        type: clientEvents.continue,
         sessionId,
     });
 }
 
 function newModelEvent(sessionId: string, hiddenLayers: number[], sizeDataSet: number, override: boolean) {
     const payload = {
-        type: "NewModel",
+        type: clientEvents.newModel,
         hiddenLayers,
         sizeDataSet,
         sessionId,
@@ -66,7 +80,7 @@ type SessionDto = {
 };
 
 function parseHiddenLayers(layers: string) {
-    console.log(layers)
+    console.log(layers);
     return layers
         .split(",")
         .map((it) => it.trim())
@@ -74,7 +88,7 @@ function parseHiddenLayers(layers: string) {
         .map((it) => parseInt(it));
 }
 
-export const CreateModel = () => {
+export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: number) => void> }) => {
     const [layers, setLayers] = useState<string>("");
     const [numTraining, setNumTraining] = useState<number>(50000);
     const [running, setRunning] = useState(false);
@@ -122,7 +136,7 @@ export const CreateModel = () => {
                 onOverride={() => {
                     closeModal();
                     const hiddenLayers = parseHiddenLayers(layers);
-                    console.log(hiddenLayers)
+                    console.log(hiddenLayers);
                     webSocket.current?.send(newModelEvent(sessionId, hiddenLayers, numTraining, true));
                 }}
             />
@@ -136,7 +150,7 @@ export const CreateModel = () => {
                             setSessionIdSelect(value);
                             if (value !== "New") {
                                 setSessionId(value);
-                            }else{
+                            } else {
                                 setSessionId("");
                             }
                         }}
@@ -204,15 +218,22 @@ export const CreateModel = () => {
                             });
                             socket.addEventListener("message", (event) => {
                                 const data = JSON.parse(event.data);
-                                if (data.type === "AskSetModel") {
+                                if (data.type === serverEvents.askSetModel) {
                                     console.log("Are you fine with overriding the data?");
                                     setAskToOverride(true);
                                     setAwaitingResponse(false);
                                 }
-                                if (data.type === "Update") {
-                                    console.log("Got back data! It's running!");
+                                if (data.type === serverEvents.update) {
+                                    // console.log(`Got back data! ${data.cost}!`);
                                     setAwaitingResponse(false);
                                     setRunning(true);
+                                    onCostUpdate.current?.(data.cost);
+                                }
+                                if (data.type === serverEvents.clientError) {
+                                    console.log("Client error: ", data.message);
+                                    setAwaitingResponse(false);
+                                    setRunning(false);
+                                    webSocket.current?.close();
                                 }
                             });
                             webSocket.current = socket;
