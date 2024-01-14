@@ -84,7 +84,7 @@ class NeuralNetworkBuilder(
         val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
         var trainingDataChunk: List<InputVsOutput> = trainingDataChunks.first()
         val costFunctionMin = gradientDescent(
-            learningRate = 4.0,
+            learningRate = 10.0,
             startingCoordinate = DoubleArray(weightsDimensions) { Random.nextDouble(-1.0, 1.0) },
             gradientFunction = { step, weightsVector ->
                 trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
@@ -92,8 +92,10 @@ class NeuralNetworkBuilder(
                 gradientFunction(neuralNetwork, trainingDataChunk)
             },
             iterationCallback = { step, coordinate, _ ->
-                val cost = buildNetwork(coordinate).calculateCostFunction(trainingDataChunk)
-                record.add(Record(step = step, cost = cost))
+                if (step % 50 == 0){
+                    val cost = buildNetwork(coordinate).calculateCostFunction(trainingDataChunk)
+                    record.add(Record(step = step, cost = cost))
+                }
             }
         )
         return NeuralNetwork(

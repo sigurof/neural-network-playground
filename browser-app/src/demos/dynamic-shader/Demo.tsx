@@ -11,6 +11,7 @@ import styled from "styled-components";
 import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
 import { range } from "../../utils.ts";
 import ColorGrid, { RGBColor } from "./ColorGrid.tsx";
+import { circlesDataSets } from "./data3d.ts";
 
 export type Matrix = {
     rows: number;
@@ -19,7 +20,7 @@ export type Matrix = {
 };
 
 const mlTrainingData: MLInputOutput[] =
-    circlesDataSets2.nonLinear.circularRegion;
+    circlesDataSets.abc.redAndBlue;
 const circleData: CircleData[] = mlTrainingData.map((data) => {
     return {
         pos: {
@@ -33,7 +34,7 @@ const circleData: CircleData[] = mlTrainingData.map((data) => {
         },
     };
 });
-const hiddenLayerDimensions: number[] = [4, 5];
+const hiddenLayerDimensions: number[] = [8, 6];
 const layerDimensions = [
     mlTrainingData[0].input.length,
     ...hiddenLayerDimensions,
@@ -307,6 +308,7 @@ export const Demo = () => {
     } | null>(null);
     const chartUpdater = useRef<{
         update: (points: { x: number; y: number }[]) => void;
+        destroy: () => void;
     } | null>(null);
 
     function handleFormChange(form: Matrix[]) {
@@ -318,16 +320,19 @@ export const Demo = () => {
     useEffect(() => {
         return () => {
             threeJsController.current?.tearDown();
+            chartUpdater.current?.destroy();
         };
     }, []);
 
-    // useEffect(() => {
-    //     if (!chartInitialized) {
-    //         chartUpdater.current = {
-    //             update: startChartJs()!.updateChart,
-    //         };
-    //     }
-    // }, []);
+    useEffect(() => {
+        if (!chartInitialized) {
+            const startChartJs1 = startChartJs();
+            chartUpdater.current = {
+                update: startChartJs1!.updateChart,
+                destroy: startChartJs1!.destroy,
+            };
+        }
+    }, []);
     useEffect(() => {
         if (!threeJsInitialized) {
             const result = startThree(
@@ -374,11 +379,11 @@ export const Demo = () => {
                     const formData = castToSimpleNetworkLayer(result);
                     const statistics = castToStats(result);
                     handleFormChange(formData);
-                    // chartUpdater.current!.update(
-                    //     statistics.map((stat) => {
-                    //         return { x: stat.step, y: stat.cost };
-                    //     }),
-                    // );
+                    chartUpdater.current!.update(
+                        statistics.map((stat) => {
+                            return { x: stat.step, y: stat.cost };
+                        }),
+                    );
                 }}
             >
                 Train!
@@ -386,9 +391,9 @@ export const Demo = () => {
             <GraphicsContainer>
                 <ThreeJsContainer id="threeCanvas" />
 
-                {/*<ChartContainer>*/}
-                {/*    <canvas id="chartCanvas" />*/}
-                {/*</ChartContainer>*/}
+                <ChartContainer>
+                    <canvas id="chartCanvas" />
+                </ChartContainer>
             </GraphicsContainer>
             <button
                 onClick={async () => {
