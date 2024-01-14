@@ -12,4 +12,5 @@ void main(void){
     } else {
         out_Color = vec4(fragColor, 1);
     }
+    gl_FragDepth = 0.4;
 }
