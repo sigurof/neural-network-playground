@@ -40,19 +40,19 @@ fun Route.webSocketRoutes() {
         var sessionId: String? = null
         try {
             while (true) {
-                val frame = incoming.receive()
-                if (frame is Frame.Text) {
-                    val text = frame.readText()
-                    deserializeEvent(text)
-                        ?.let { event ->
-                            sessionId = event.sessionId
-                            when (event) {
-                                is ClientEvent.NewModel -> handleNewModel(event)
-                                is ClientEvent.Continue -> handleContinueWithModel(event)
-                                else -> error("Unknown event $event")
-//                        }
+                when (val frame = incoming.receive()) {
+                    is Frame.Text -> {
+                        deserializeEvent(frame.readText())
+                            ?.let { event ->
+                                sessionId = event.sessionId
+                                when (event) {
+                                    is ClientEvent.NewModel -> handleNewModel(event)
+                                    is ClientEvent.Continue -> handleContinueWithModel(event)
+                                }
                             }
-                        }
+                    }
+
+                    else -> error("Unknown frame $frame")
                 }
             }
         } catch (e: Exception) {
@@ -124,13 +124,13 @@ val json = Json { serializersModule = webSocketsSerializersModule }
 private fun expensiveCalculationFlow(event: ClientEvent): Flow<ServerEvent> =
     flow {
         val state = sessions.getOrPut(event.sessionId) { Session(false, 0, "", true, Model()) }
-        for (i in (state.progress + 1)..6000) {
-            delay(300)
+        for (i in state.progress..6000) {
             val update = "Update $i of 60"
             state.progress = i
             state.result = update
             val sinT = sin(i.toDouble() / 5.0)
             emit(ServerEvent.Update(update, sinT))
+            delay(300)
         }
         emit(ServerEvent.Update("Calculation Result", 7.0))
         state.result = "Calculation Result"

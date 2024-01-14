@@ -32,7 +32,7 @@ const TestingGrounds = () => {
 };
 
 export const Mnist = () => {
-    const [cost, setCost] = useState<number[]>([0, 0, 0]);
+    const [cost, setCost] = useState<number[]>([]);
     const onCostUpdate = useCallback(
         (newCost: number) => {
             setCost([...cost, newCost]);
