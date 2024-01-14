@@ -69,9 +69,7 @@ class WeightsAndBiases(
         networkConnectionsIn = networkConnectionsIn,
         data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod)
     )
-}
 
-class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
     internal fun calculateCostFunction(trainingData: List<InputVsOutput>): Double {
         return trainingData.map { trainingDataPoint: InputVsOutput ->
             val outputActivations: DoubleArray = evaluateActivations(trainingDataPoint.input).last()
@@ -86,7 +84,7 @@ class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
 
     fun evaluateActivations(input: DoubleArray): List<DoubleArray> {
         val activations: MutableList<DoubleArray> = mutableListOf(input)
-        for (layer in weightsAndBiases.weightsLayers) {
+        for (layer in weightsLayers) {
             val arrayProduct: DoubleArray = layer.matrix * activations[layer.index].concat(1)
             activations.add(elementwiseSigmoid(arrayProduct))
         }

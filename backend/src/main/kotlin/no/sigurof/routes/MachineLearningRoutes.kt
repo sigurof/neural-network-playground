@@ -13,11 +13,8 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.NetworkConnectionInfo
-import no.sigurof.ml.NeuralNetwork
 import no.sigurof.ml.NeuralNetworkBuilder
 import no.sigurof.ml.WeightsAndBiases
-import no.sigurof.models.MatrixDto
-import no.sigurof.models.NeuralNetworkParams
 
 fun Route.machineLearningRouting() {
     get("/") {
@@ -36,17 +33,15 @@ fun Route.machineLearningRouting() {
     post("/ml/evaluate") {
         val weightsRequest = call.receive<List<WeightsRequest>>()
         val neuralNetwork =
-            NeuralNetwork(
-                WeightsAndBiases(
-                    data = weightsRequest.flatMap { it.data.flatten() }.toDoubleArray(),
-                    networkConnectionsIn =
-                        weightsRequest.map {
-                            NetworkConnectionInfo(
-                                inputs = it.columns - 1,
-                                outputs = it.rows
-                            )
-                        }
-                )
+            WeightsAndBiases(
+                data = weightsRequest.flatMap { it.data.flatten() }.toDoubleArray(),
+                networkConnectionsIn =
+                    weightsRequest.map {
+                        NetworkConnectionInfo(
+                            inputs = it.columns - 1,
+                            outputs = it.rows
+                        )
+                    }
             )
         val xPixels = 100
         val yPixels = 100
@@ -84,7 +79,7 @@ fun Route.machineLearningRouting() {
 
 private fun NeuralNetworkBuilder.TrainingResult.toTrainedNeuralNetworkResponse(): TrainedNeuralNetworkResponse {
     val weights: List<MatrixDto> =
-        neuralNetwork.weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
+        weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
     return TrainedNeuralNetworkResponse(layers = weights, record = record)
 }
 
