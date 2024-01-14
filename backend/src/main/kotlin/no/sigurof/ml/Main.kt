@@ -12,6 +12,7 @@ import no.sigurof.ml.neuralnetwork.Record
 import no.sigurof.ml.server.startKtorServer
 
 fun main() {
+    MNIST.loadTrainingData(10)
     startKtorServer()
 }
 
@@ -29,8 +30,7 @@ fun trainMnist() {
     val neuralNetworkBuilder =
         NeuralNetworkBuilder(
             hiddenLayerDimensions = listOf(30),
-            trainingData =
-            trainingData
+            trainingData = trainingData
         )
     val trainingResult =
         neuralNetworkBuilder.trainNew2(iterationCallback = { step, weightsAndBiases ->
@@ -46,7 +46,7 @@ fun trainMnist() {
 //    println(trainingResult.record.last())
 }
 
-private fun Byte.asDoubleArray(): DoubleArray {
+fun Byte.asDoubleArray(): DoubleArray {
     val doubleArray = DoubleArray(10) { 0.0 }
     doubleArray[this.toInt()] = 1.0
     return doubleArray

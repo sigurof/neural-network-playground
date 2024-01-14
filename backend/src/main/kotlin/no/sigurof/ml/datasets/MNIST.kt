@@ -5,10 +5,13 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.min
+import no.sigurof.ml.asDoubleArray
+import no.sigurof.ml.neuralnetwork.InputVsOutput
 
 object MNIST {
     private const val TRAINING_LABELS_FILE = "./datasets/MNIST/unzipped/train-labels-idx1-ubyte"
     private const val TRAINING_IMAGES_FILE = "./datasets/MNIST/unzipped/train-images-idx3-ubyte"
+    var trainingData: TrainingData? = null
 
     class TrainingLabels(
         val magicNumber: Int,
@@ -99,6 +102,7 @@ object MNIST {
                     val pixels: IntArray = readUnsignedBytesToIntArray(inputStream, pixelsPerImage)
                     images.add(pixels)
                 }
+                println("Read $numberOfImagesToInclude images.")
                 println("Done reading pixels.")
 
 //                val images: List<List<Int>> =
@@ -128,7 +132,13 @@ object MNIST {
     class LabeledImage(
         val label: Byte,
         val image: IntArray,
-    )
+    ) {
+        fun toInputVsOutput(): InputVsOutput =
+            InputVsOutput(
+                input = this.image.map { pixel -> pixel.toDouble() / 255.toDouble() }.toDoubleArray(),
+                output = this.label.asDoubleArray()
+            )
+    }
 
     class TrainingData(
         val imageRows: Int,
@@ -136,10 +146,14 @@ object MNIST {
         val labeledImages: List<LabeledImage>,
     )
 
+    fun loadTrainingData(n: Int) {
+        this.trainingData = parseTrainingData(n)
+    }
+
     fun parseTrainingData(n: Int): TrainingData {
         val labels = trainingLabels().labels.take(n)
         val (images, rows, cols) = trainingImages(n)
-        val map =
+        val labeledImages =
             labels.zip(images).map { (label, image) ->
                 LabeledImage(
                     label = label,
@@ -149,7 +163,7 @@ object MNIST {
         return TrainingData(
             imageRows = rows,
             imageCols = cols,
-            labeledImages = map
+            labeledImages = labeledImages
         )
 //        return Data(
 //            trainingLabels = trainingLabels().labels,

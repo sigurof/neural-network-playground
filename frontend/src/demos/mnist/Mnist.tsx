@@ -31,6 +31,13 @@ const TestingGrounds = () => {
     );
 };
 
+export type Matrix = {
+    rows: number;
+    columns: number;
+    data: number[][];
+};
+
+
 export const Mnist = () => {
     const [cost, setCost] = useState<number[]>([]);
     const onCostUpdate = useCallback(
@@ -39,7 +46,7 @@ export const Mnist = () => {
         },
         [cost],
     );
-    const onCostUpdateRef: MutableRefObject<(newCost: number) => void> = useRef(onCostUpdate);
+    const onCostUpdateRef: MutableRefObject<(cost: number) => void> = useRef(onCostUpdate);
 
     useEffect(() => {
         onCostUpdateRef.current = onCostUpdate;

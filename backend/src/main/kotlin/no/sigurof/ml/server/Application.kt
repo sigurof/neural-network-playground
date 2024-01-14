@@ -5,6 +5,7 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.Serializable
+import no.sigurof.ml.neuralnetwork.WeightsAndBiases
 import no.sigurof.ml.server.web.rest.restModule
 import no.sigurof.ml.server.web.rest.restRoutes
 import no.sigurof.ml.server.web.websockets.webSocketRoutes
@@ -24,7 +25,9 @@ fun startKtorServer() {
         .start(wait = true)
 }
 
-internal val sessions = ConcurrentHashMap<String, Session>()
+internal val sessions = ConcurrentHashMap<String, IterativeServerClientSession>()
+
+internal val nnSessions = ConcurrentHashMap<String, NeuralNetworkServerClientSession>()
 
 @Serializable
 class Model(
@@ -32,8 +35,31 @@ class Model(
     val sizeDataSet: Int,
 )
 
-data class Session(
+data class IterativeServerClientSession(
     var progress: Int,
     var result: String,
     var model: Model,
-)
+) {
+    companion object {
+        fun new(model: Model) = IterativeServerClientSession(progress = 0, result = "", model = model)
+    }
+}
+
+class NeuralNetworkServerClientSession(
+    var progress: Int,
+    var result: WeightsAndBiases,
+    var model: Model,
+) {
+    companion object {
+        fun new(
+            model: Model,
+            baseState: WeightsAndBiases,
+        ): NeuralNetworkServerClientSession {
+            return NeuralNetworkServerClientSession(
+                progress = 0,
+                model = model,
+                result = baseState
+            )
+        }
+    }
+}

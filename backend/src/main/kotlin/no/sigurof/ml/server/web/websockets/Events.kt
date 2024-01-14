@@ -2,11 +2,12 @@ package no.sigurof.ml.server.web.websockets
 
 import kotlinx.serialization.Serializable
 import no.sigurof.ml.server.Model
+import no.sigurof.ml.server.web.OutMatrix
 
 @Serializable
 internal sealed class ServerEvent {
     @Serializable
-    data class Update(val message: String, val cost: Double) : ServerEvent()
+    data class Update(val message: String, val weights: List<OutMatrix>) : ServerEvent()
 
     @Serializable
     data object AskSetModel : ServerEvent()

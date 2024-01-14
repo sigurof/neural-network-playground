@@ -16,9 +16,12 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import no.sigurof.ml.neuralnetwork.trainNetworkMock
-import no.sigurof.ml.server.Session
+import no.sigurof.ml.datasets.MNIST
+import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
+import no.sigurof.ml.server.NeuralNetworkServerClientSession
+import no.sigurof.ml.server.nnSessions
 import no.sigurof.ml.server.sessions
+import no.sigurof.ml.server.web.toMatrixDto
 
 fun Application.webSocketsModule() {
     install(WebSockets) {
@@ -43,7 +46,13 @@ fun Route.webSocketRoutes() {
                                 sessionId = event.sessionId
                                 when (event) {
                                     is ClientEvent.NewModel -> handleNewModel(event)
-                                    is ClientEvent.Continue -> handleContinueWithModel(event.sessionId)
+                                    is ClientEvent.Continue -> {
+                                        nnSessions[sessionId]?.let { session ->
+                                            receiveNeuralNetworkUpdates(session)
+                                        } ?: run {
+                                            sendServerEvent(ServerEvent.ClientError("No session with id $sessionId."))
+                                        }
+                                    }
                                 }
                             }
                     }
@@ -52,7 +61,8 @@ fun Route.webSocketRoutes() {
                 }
             }
         } catch (e: Exception) {
-            println("Connection with session $sessionId lost: ${e.localizedMessage}")
+            println("Connection with session $sessionId lost:")
+            println(e.stackTraceToString())
         } finally {
             println("Session $sessionId disconnected")
         }
@@ -73,24 +83,35 @@ private suspend fun WebSocketServerSession.sendServerEvent(data: ServerEvent) {
     send(Frame.Text(text))
 }
 
-private suspend fun WebSocketServerSession.handleContinueWithModel(sessionId: String) {
-    val state = sessions[sessionId] ?: error("Session $sessionId not found")
-    trainNetworkMock(startI = state.progress)
-        .collect { (index, value) ->
-            state.progress = index
-            println("Sending update $index")
-            sendServerEvent(ServerEvent.Update("Update $index of 60", value))
-        }
+private suspend fun WebSocketServerSession.receiveNeuralNetworkUpdates(session: NeuralNetworkServerClientSession) {
+    var i = 0
+    NeuralNetworkBuilder(
+        trainingData = MNIST.trainingData!!.labeledImages.map { it.toInputVsOutput() },
+        hiddenLayerDimensions = session.model.hiddenLayers
+    ).trainBackProp().collect { weights ->
+        i++
+        sendServerEvent(ServerEvent.Update("Update $i of 60", weights.weightsLayers.map { it.matrix.toMatrixDto() }))
+    }
 }
 
 private suspend fun WebSocketServerSession.handleNewModel(event: ClientEvent.NewModel) {
     println("New model: $event")
-    val session = sessions[event.sessionId]
-    if (session?.model == null || event.override) {
+    val sessions = nnSessions
+    val sessionId = event.sessionId
+    if (sessions[sessionId]?.model == null || event.override) {
         // if model is new or override is true, set model and train
-        sessions[event.sessionId] =
-            Session(progress = 0, result = "", model = event.model)
-        handleContinueWithModel(event.sessionId)
+        val populateWeightsAndBiasesRaw =
+            NeuralNetworkBuilder(
+                trainingData = MNIST.trainingData!!.labeledImages.map { it.toInputVsOutput() },
+                hiddenLayerDimensions = event.model.hiddenLayers
+            ).populateWeightsAndBiasesRaw { _ -> 0.0 }
+        sessions[sessionId] =
+            NeuralNetworkServerClientSession.new(model = event.model, baseState = populateWeightsAndBiasesRaw)
+        sessions[sessionId]?.let { session ->
+            receiveNeuralNetworkUpdates(session)
+        } ?: run {
+            sendServerEvent(ServerEvent.ClientError("No session with id $sessionId."))
+        }
     } else {
         // ... if sessionId collides, ask user to confirm override
         println("Asking client to confirm")

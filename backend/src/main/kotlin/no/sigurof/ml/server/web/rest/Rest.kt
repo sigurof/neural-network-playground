@@ -19,11 +19,12 @@ import kotlinx.serialization.Serializable
 import no.sigurof.ml.neuralnetwork.NetworkConnectionInfo
 import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
 import no.sigurof.ml.neuralnetwork.WeightsAndBiases
+import no.sigurof.ml.server.IterativeServerClientSession
 import no.sigurof.ml.server.Model
-import no.sigurof.ml.server.Session
 import no.sigurof.ml.server.plugins.configureSerialization
 import no.sigurof.ml.server.sessions
-import no.sigurof.ml.utils.Matrix
+import no.sigurof.ml.server.web.OutMatrix
+import no.sigurof.ml.server.web.toMatrixDto
 
 @Serializable
 class SessionDto(
@@ -33,7 +34,7 @@ class SessionDto(
     var model: Model? = null,
 )
 
-fun Map.Entry<String, Session>.toResponse() =
+fun Map.Entry<String, IterativeServerClientSession>.toResponse() =
     SessionDto(
         id = this.key,
         progress = this.value.progress,
@@ -50,7 +51,7 @@ fun Route.restRoutes() {
     post("/ml/network") {
         val inNeuralNetwork: InNeuralNetwork = call.receive<InNeuralNetwork>()
         val shouldRecordCostFunction = call.request.queryParameters["recordCostFunction"]?.toBoolean() ?: false
-        val trainingResult =
+        val trainingResult: NeuralNetworkBuilder.TrainingResult =
             NeuralNetworkBuilder(
                 trainingData = inNeuralNetwork.trainingData,
                 hiddenLayerDimensions = inNeuralNetwork.hiddenLayerDimensions
@@ -108,15 +109,6 @@ private fun NeuralNetworkBuilder.TrainingResult.toResponse(): OutTrainedNeuralNe
     val weights: List<OutMatrix> =
         weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
     return OutTrainedNeuralNetwork(layers = weights, record = record)
-}
-
-fun Matrix.toMatrixDto(): OutMatrix {
-    val chunkedData: List<List<Double>> = this.data.toList().chunked(this.cols)
-    return OutMatrix(
-        rows = this.rows,
-        columns = this.cols,
-        data = chunkedData
-    )
 }
 
 fun Application.restModule() {

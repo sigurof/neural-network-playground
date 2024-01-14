@@ -6,6 +6,8 @@ import styled from "styled-components";
 import { styled as muiStyled } from "@mui/material/styles";
 import { OverrideDialog } from "./OverrideDialog.tsx";
 import { toast } from "react-toastify";
+import { Matrix } from "../Mnist.tsx";
+import { range } from "../../../utils.ts";
 
 function valuetext(value: number) {
     return `${value}°C`;
@@ -39,19 +41,32 @@ const LargeButton = muiStyled(Button)(({ theme }: { theme: any }) => ({
     fontSize: "1.2rem",
 }));
 
-const EVENTS_BASE = "no.sigurof.ml.server.web.websockets";
-const CLIENT_EVENT_BASE = `${EVENTS_BASE}.ClientEvent`;
-const SERVER_EVENT_BASE = `${EVENTS_BASE}.ServerEvent`;
-
 const serverEvents = {
-    askSetModel: `${SERVER_EVENT_BASE}.AskSetModel`,
-    update: `${SERVER_EVENT_BASE}.Update`,
-    clientError: `${SERVER_EVENT_BASE}.ClientError`,
+    askSetModel: `no.sigurof.ml.server.web.websockets.ServerEvent.AskSetModel`,
+    update: `no.sigurof.ml.server.web.websockets.ServerEvent.Update`,
+    clientError: `no.sigurof.ml.server.web.websockets.ServerEvent.ClientError`,
+} as const;
+
+type InferedType = typeof serverEvents.askSetModel;
+type AskSetModel = {
+    type: InferedType;
 };
 
+type Update = {
+    type: typeof serverEvents.update;
+    weights: Matrix[];
+};
+
+type ClientError = {
+    type: typeof serverEvents.clientError;
+    message: string;
+};
+
+type ServerEvent = AskSetModel | Update | ClientError;
+
 const clientEvents = {
-    continue: `${CLIENT_EVENT_BASE}.Continue`,
-    newModel: `${CLIENT_EVENT_BASE}.NewModel`,
+    continue: `no.sigurof.ml.server.web.websockets.ClientEvent.Continue`,
+    newModel: `no.sigurof.ml.server.web.websockets.ClientEvent.NewModel`,
 };
 
 const createEvent = {
@@ -90,6 +105,43 @@ function parseHiddenLayers(layers: string) {
         .map((it) => it.trim())
         .filter((it) => it)
         .map((it) => parseInt(it));
+}
+
+function matrixMultiplication(data: number[][], param2: number[]): number[] {
+    const outputLength = data.length;
+    const output = range(outputLength).map(() => 0);
+    for (let iRow = 0; iRow < data.length; iRow++) {
+        let outputRow = 0;
+        for (let iCol = 0; iCol < data[iRow].length; iCol++) {
+            outputRow += param2[iCol] * data[iRow][iCol];
+        }
+    }
+    return output;
+}
+
+function sigmoid(x: number): number {
+    return 1 / (1 + Math.exp(-x));
+}
+
+function elementwiseSigmoid(numbers: number[]): number[] {
+    return numbers.map((it) => sigmoid(it));
+}
+
+function evaluateActivations(weights: Matrix[]): number[][] {
+    const firstActivations = range(weights[0].columns - 1).map(() => 0);
+    const activations = [firstActivations];
+
+    for (let i = 0; i < weights.length; i++) {
+        const layer = weights[i];
+        const activationsOfLastLayer: number[] = activations[i];
+        const arrayProduct = matrixMultiplication(layer.data, [...activationsOfLastLayer, 1]);
+        activations.push(elementwiseSigmoid(arrayProduct));
+    }
+    return activations;
+}
+
+function evaluateCost(_: Matrix[]): number {
+    return 1;
 }
 
 export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: number) => void> }) => {
@@ -224,17 +276,16 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                                 );
                             });
                             socket.addEventListener("message", (event) => {
-                                const data = JSON.parse(event.data);
+                                const data: ServerEvent = JSON.parse(event.data);
                                 if (data.type === serverEvents.askSetModel) {
                                     console.log("Are you fine with overriding the data?");
                                     setAskToOverride(true);
                                     setAwaitingResponse(false);
                                 }
                                 if (data.type === serverEvents.update) {
-                                    // console.log(`Got back data! ${data.cost}!`);
                                     setAwaitingResponse(false);
                                     setRunning(true);
-                                    onCostUpdate.current?.(data.cost);
+                                    onCostUpdate.current?.(evaluateCost(data.weights));
                                 }
                                 if (data.type === serverEvents.clientError) {
                                     console.log("Client error: ", data.message);

@@ -63,6 +63,14 @@ class NeuralNetworkBuilder(
         val record: List<Record>,
     )
 
+    fun trainBackProp(): Flow<WeightsAndBiases> =
+        flow {
+            while (true) {
+                delay(1000)
+                emit(populateWeightsAndBiasesRaw { 2.0 * Random.nextDouble() - 1.0 })
+            }
+        }
+
     fun trainNew(recordCostFunction: Boolean = false): TrainingResult =
         train(recordCostFunction = recordCostFunction, gradientFunction = BackPropagation::calculateGradient)
 
