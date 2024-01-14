@@ -23,10 +23,10 @@ fun Route.machineLearningRouting() {
 
     post("/ml/network") {
         val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>()
-        val recordCostFunction = call.request.queryParameters["recordCostFunction"]?.toBoolean() ?: false
+        val shouldRecordCostFunction = call.request.queryParameters["recordCostFunction"]?.toBoolean() ?: false
         val trainingResult =
             NeuralNetworkBuilder(neuralNetworkParams)
-                .trainNew(recordCostFunction = recordCostFunction)
+                .trainNew(shouldRecordCostFunction)
         call.respond(trainingResult.toTrainedNeuralNetworkResponse())
     }
 
