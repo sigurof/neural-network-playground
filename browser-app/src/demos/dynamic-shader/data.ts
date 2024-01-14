@@ -34,8 +34,8 @@ const randomlyDistributedPointsSeparatedBy = (
 
 const BLUE_ARRAY = [0.0, 1.0];
 const RED_ARRAY = [1.0, 0.0];
-type TrainingPoint = { input: number[]; output: number[] };
-export type TrainingData = TrainingPoint[];
+export type MLInputOutput = { input: number[]; output: number[] };
+export type TrainingData = MLInputOutput[];
 const toTrainingData = (circleData: CircleData2D) => ({
     input: [circleData.position.x, circleData.position.y],
     output: circleData.color === "red" ? RED_ARRAY : BLUE_ARRAY,
