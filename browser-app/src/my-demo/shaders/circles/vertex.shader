@@ -1,8 +1,11 @@
 
+in vec2 position;
+
 uniform float aspect;
 uniform float radius;
 uniform vec2 center;
 uniform vec3 color;
+
 
 out vec2 coord2d;
 out vec3 fragColor;
@@ -28,7 +31,7 @@ vec2 whichVertex(){
 }
 
 void main(void){
-    coord2d = whichVertex();
+    coord2d = position;
     gl_Position = vec4(center + radius * coord2d, 0.0, 1.0);
     gl_Position.x /= aspect;
     fragColor = color;
