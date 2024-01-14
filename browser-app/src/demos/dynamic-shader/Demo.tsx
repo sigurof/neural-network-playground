@@ -33,7 +33,7 @@ const circleData: CircleData[] = mlTrainingData.map((data) => {
         },
     };
 });
-const hiddenLayerDimensions: number[] = [4, 4];
+const hiddenLayerDimensions: number[] = [3];
 const layerDimensions = [
     mlTrainingData[0].input.length,
     ...hiddenLayerDimensions,
@@ -313,13 +313,10 @@ export const Demo = () => {
         setForm(form);
         threeJsController.current!.update(form);
     }
-    const newRandom = Math.random();
-    console.log(`The new random is ${newRandom}`)
 
     // a useeffect calling threeJsController.tearDown on unmount
     useEffect(() => {
         return () => {
-            console.log(`tearing down ${newRandom}}`);
             threeJsController.current?.tearDown();
         };
     }, []);
@@ -377,11 +374,11 @@ export const Demo = () => {
                     const formData = castToSimpleNetworkLayer(result);
                     const statistics = castToStats(result);
                     handleFormChange(formData);
-                    chartUpdater.current!.update(
-                        statistics.map((stat) => {
-                            return { x: stat.step, y: stat.cost };
-                        }),
-                    );
+                    // chartUpdater.current!.update(
+                    //     statistics.map((stat) => {
+                    //         return { x: stat.step, y: stat.cost };
+                    //     }),
+                    // );
                 }}
             >
                 Train!
