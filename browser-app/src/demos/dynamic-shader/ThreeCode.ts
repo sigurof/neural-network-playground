@@ -3,7 +3,7 @@ import circlesVtxSource from "./shaders/circles/vertex.shader?raw";
 import circlesFragSource from "./shaders/circles/fragment.shader?raw";
 import networkVtxSource from "./shaders/network/vertex.shader?raw";
 import networkFragSource from "./shaders/network/fragment.shader?raw";
-import { Matrix } from "./Demo.tsx";
+import { Matrix, NetworkConnection } from "./Demo.tsx";
 
 const SQUARE: number[] = [
     -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,
@@ -59,7 +59,11 @@ function createBillboardMesh(aspect: number, circlesInputOutput: CircleData[]) {
     return new THREE.Mesh(geometry, material);
 }
 
-function createBackgroundMesh(aspect: number, startValues: Matrix[]) {
+function createBackgroundMesh(
+    aspect: number,
+    startValues: Matrix[],
+    weightsAndBiasesDimensions: NetworkConnection[],
+) {
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute(
         "position",
@@ -70,6 +74,14 @@ function createBackgroundMesh(aspect: number, startValues: Matrix[]) {
 
     const { allWeightsAndBiases } = createLayers(startValues);
 
+    const numberOfMatrices = weightsAndBiasesDimensions.length;
+    const matrixDimensions = weightsAndBiasesDimensions.flatMap((it) => [
+        it.rows,
+        it.cols,
+    ]);
+    console.log(`All weights and biases: ${allWeightsAndBiases.length}`)
+    console.log(`Matrix dimensions: ${matrixDimensions.length}`)
+
     const material = new THREE.RawShaderMaterial({
         glslVersion: THREE.GLSL3,
         vertexShader: networkVtxSource,
@@ -78,6 +90,8 @@ function createBackgroundMesh(aspect: number, startValues: Matrix[]) {
         uniforms: {
             aspect: { value: aspect },
             allWeightsAndBiases: { value: allWeightsAndBiases },
+            matrixDimensions: { value: new Int32Array(matrixDimensions) },
+            numberOfMatrices: { value: numberOfMatrices },
         },
     });
     const circleTranslationsArray = new Float32Array(2);
@@ -134,6 +148,7 @@ export let threeJsInitialized = false;
 export function startThree(
     startValues: Matrix[],
     circlesInputOutput: CircleData[],
+    weightsAndBiasesDimensions: NetworkConnection[],
 ) {
     const sceneInfo = createScene();
     if (!sceneInfo) {
@@ -143,7 +158,11 @@ export function startThree(
     const { scene, renderer, aspect, camera } = sceneInfo;
     const billboardMesh = createBillboardMesh(aspect, circlesInputOutput);
     scene.add(billboardMesh);
-    const backgroundMesh = createBackgroundMesh(aspect, startValues);
+    const backgroundMesh = createBackgroundMesh(
+        aspect,
+        startValues,
+        weightsAndBiasesDimensions,
+    );
     scene.add(backgroundMesh);
     const controls = {
         hasChanged: false,

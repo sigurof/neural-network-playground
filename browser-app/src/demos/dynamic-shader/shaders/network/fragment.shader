@@ -4,7 +4,9 @@ in vec2 coord2d;
 
 out vec4 out_Color;
 
-uniform float[20] allWeightsAndBiases;
+uniform float[100] allWeightsAndBiases;
+uniform int numberOfMatrices;
+uniform ivec2[10] matrixDimensions;
 
 vec4 elementwiseSigmoid(vec4 v){
     return vec4(
@@ -23,7 +25,7 @@ float[30] elementwiseSigmoid(float[30] v, int rows){
     return result;
 }
 
-float[100] flatMatrix(float[20] allMatricesFlat, int currentMatrixIndex, ivec2[10] allMatrixDimensions){
+float[100] flatMatrix(float[100] allMatricesFlat, int currentMatrixIndex, ivec2[10] allMatrixDimensions){
     int offset = 0;
     for (int i = 0; i < currentMatrixIndex; i++){
         offset += allMatrixDimensions[i].x * allMatrixDimensions[i].y;
@@ -75,9 +77,6 @@ float[30] matrixMult(float[100] matrix, ivec2 matrixDimensions, float[30] vector
 }
 
 void main(void){
-    ivec2[10] matrixDimensions;
-    matrixDimensions[0] = ivec2(3, 3);
-    matrixDimensions[1] = ivec2(3, 4);
 
     // First Layer
     vec2 firstLayer = coord2d;
@@ -90,11 +89,11 @@ void main(void){
     // Then iterate over all the remaining layers
     float[100] nextWeights;
     float[30] nextLayerZ;
-    int remainingWeightMatrices = 2 -1;
-    for (int i = 0; i < remainingWeightMatrices; i++){
-        nextWeights = flatMatrix(allWeightsAndBiases, 1, matrixDimensions);
-        nextLayerZ = matrixMult(nextWeights, matrixDimensions[1], nextLayerActivation);
-        nextLayerActivation = elementwiseSigmoid(nextLayerZ, matrixDimensions[1].x);
+//    int remainingWeightMatrices = numberOfMatrices -1;
+    for (int i = 1; i < numberOfMatrices; i++){
+        nextWeights = flatMatrix(allWeightsAndBiases, i, matrixDimensions);
+        nextLayerZ = matrixMult(nextWeights, matrixDimensions[i], nextLayerActivation);
+        nextLayerActivation = elementwiseSigmoid(nextLayerZ, matrixDimensions[i].x);
     }
 
     vec3  lastLayer = vec3(nextLayerActivation[0], 0, nextLayerActivation[1]);
