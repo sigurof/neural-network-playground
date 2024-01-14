@@ -16,15 +16,14 @@ import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import kotlinx.serialization.Serializable
-import no.sigurof.ml.neuralnetwork.NetworkConnectionInfo
+import no.sigurof.ml.neuralnetwork.NeuralNetwork
 import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
-import no.sigurof.ml.neuralnetwork.WeightsAndBiases
+import no.sigurof.ml.neuralnetwork.NeuralNetworkConnectionSpec
 import no.sigurof.ml.server.IterativeServerClientSession
 import no.sigurof.ml.server.Model
 import no.sigurof.ml.server.plugins.configureSerialization
 import no.sigurof.ml.server.sessions
-import no.sigurof.ml.server.web.OutMatrix
-import no.sigurof.ml.server.web.toMatrixDto
+import no.sigurof.ml.server.web.common.toDto
 
 @Serializable
 class SessionDto(
@@ -34,7 +33,7 @@ class SessionDto(
     var model: Model? = null,
 )
 
-fun Map.Entry<String, IterativeServerClientSession>.toResponse() =
+fun Map.Entry<String, IterativeServerClientSession>.toDto() =
     SessionDto(
         id = this.key,
         progress = this.value.progress,
@@ -44,7 +43,7 @@ fun Map.Entry<String, IterativeServerClientSession>.toResponse() =
 
 fun Route.restRoutes() {
     get("/ml/sessions") {
-        val message: List<SessionDto> = sessions.map { it.toResponse() }
+        val message: List<SessionDto> = sessions.map { it.toDto() }
         call.respond(message)
     }
 
@@ -57,17 +56,18 @@ fun Route.restRoutes() {
                 hiddenLayerDimensions = inNeuralNetwork.hiddenLayerDimensions
             )
                 .trainNew(shouldRecordCostFunction)
-        call.respond(trainingResult.toResponse())
+        val trainedNeuralNetwork: TrainedNeuralNetworkDto = trainingResult.toDto()
+        call.respond(trainedNeuralNetwork)
     }
 
     post("/ml/evaluate") {
         val weightsRequest = call.receive<List<InWeights>>()
         val neuralNetwork =
-            WeightsAndBiases(
+            NeuralNetwork(
                 data = weightsRequest.flatMap { it.data.flatten() }.toDoubleArray(),
                 networkConnectionsIn =
                     weightsRequest.map {
-                        NetworkConnectionInfo(
+                        NeuralNetworkConnectionSpec(
                             inputs = it.columns - 1,
                             outputs = it.rows
                         )
@@ -105,10 +105,11 @@ fun Route.restRoutes() {
     }
 }
 
-private fun NeuralNetworkBuilder.TrainingResult.toResponse(): OutTrainedNeuralNetwork {
-    val weights: List<OutMatrix> =
-        weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
-    return OutTrainedNeuralNetwork(layers = weights, record = record)
+private fun NeuralNetworkBuilder.TrainingResult.toDto(): TrainedNeuralNetworkDto {
+    return TrainedNeuralNetworkDto(
+        neuralNetwork = neuralNetwork.toDto(),
+        record = record
+    )
 }
 
 fun Application.restModule() {

@@ -20,8 +20,8 @@ import no.sigurof.ml.datasets.MNIST
 import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
 import no.sigurof.ml.server.NeuralNetworkServerClientSession
 import no.sigurof.ml.server.nnSessions
-import no.sigurof.ml.server.sessions
-import no.sigurof.ml.server.web.toMatrixDto
+import no.sigurof.ml.server.web.common.toDto
+import no.sigurof.ml.server.web.rest.toDto
 
 fun Application.webSocketsModule() {
     install(WebSockets) {
@@ -88,9 +88,9 @@ private suspend fun WebSocketServerSession.receiveNeuralNetworkUpdates(session: 
     NeuralNetworkBuilder(
         trainingData = MNIST.trainingData!!.labeledImages.map { it.toInputVsOutput() },
         hiddenLayerDimensions = session.model.hiddenLayers
-    ).trainBackProp().collect { weights ->
+    ).trainBackProp().collect { neuralNetwork ->
         i++
-        sendServerEvent(ServerEvent.Update("Update $i of 60", weights.weightsLayers.map { it.matrix.toMatrixDto() }))
+        sendServerEvent(ServerEvent.Update("Update $i of 60", neuralNetwork.toDto()))
     }
 }
 

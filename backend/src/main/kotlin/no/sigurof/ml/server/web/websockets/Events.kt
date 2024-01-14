@@ -2,12 +2,12 @@ package no.sigurof.ml.server.web.websockets
 
 import kotlinx.serialization.Serializable
 import no.sigurof.ml.server.Model
-import no.sigurof.ml.server.web.OutMatrix
+import no.sigurof.ml.server.web.common.NeuralNetworkDto
 
 @Serializable
 internal sealed class ServerEvent {
     @Serializable
-    data class Update(val message: String, val weights: List<OutMatrix>) : ServerEvent()
+    data class Update(val message: String, val neuralNetwork: NeuralNetworkDto) : ServerEvent()
 
     @Serializable
     data object AskSetModel : ServerEvent()

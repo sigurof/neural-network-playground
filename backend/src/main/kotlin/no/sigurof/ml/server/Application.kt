@@ -5,7 +5,7 @@ import io.ktor.server.netty.Netty
 import io.ktor.server.routing.routing
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.serialization.Serializable
-import no.sigurof.ml.neuralnetwork.WeightsAndBiases
+import no.sigurof.ml.neuralnetwork.NeuralNetwork
 import no.sigurof.ml.server.web.rest.restModule
 import no.sigurof.ml.server.web.rest.restRoutes
 import no.sigurof.ml.server.web.websockets.webSocketRoutes
@@ -47,13 +47,13 @@ data class IterativeServerClientSession(
 
 class NeuralNetworkServerClientSession(
     var progress: Int,
-    var result: WeightsAndBiases,
+    var result: NeuralNetwork,
     var model: Model,
 ) {
     companion object {
         fun new(
             model: Model,
-            baseState: WeightsAndBiases,
+            baseState: NeuralNetwork,
         ): NeuralNetworkServerClientSession {
             return NeuralNetworkServerClientSession(
                 progress = 0,

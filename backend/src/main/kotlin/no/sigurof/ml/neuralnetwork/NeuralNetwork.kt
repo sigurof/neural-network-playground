@@ -1,39 +1,63 @@
 package no.sigurof.ml.neuralnetwork
 
 import kotlin.math.exp
+import no.sigurof.ml.neuralnetwork.backpropagation.times
 import no.sigurof.ml.utils.Matrix
 
 fun elementwiseSigmoid(vector: DoubleArray) = DoubleArray(vector.size) { index -> 1.0 / (1.0 + exp(-vector[index])) }
 
 private fun DoubleArray.concat(i: Int) = DoubleArray(this.size + i) { if (it < this.size) this[it] else 1.0 }
 
-class WeightsAndBiases(
+class PublicConnection(
+    val inputs: Int,
+    val outputs: Int,
+    val weights: Int,
+    val biases: Int,
+    val matrix: Matrix,
+)
+
+class NeuralNetwork private constructor(
     val data: DoubleArray,
-    val weightsLayers: List<WeightsLayer>,
+    private val connections: List<WeightsLayer>,
 ) {
-    data class WeightsLayer(
+    val layerSizes: List<Int> =
+        connections.map { it.neuralNetworkConnectionSpec.inputs } + connections.last().neuralNetworkConnectionSpec.outputs
+    val connectionsPublic: List<PublicConnection>
+        get() =
+            connections.map {
+                PublicConnection(
+                    inputs = it.neuralNetworkConnectionSpec.inputs,
+                    outputs = it.neuralNetworkConnectionSpec.outputs,
+                    weights = it.neuralNetworkConnectionSpec.weights,
+                    biases = it.neuralNetworkConnectionSpec.biases,
+                    matrix = it.matrix
+                )
+            }
+
+    constructor(
+        networkConnectionsIn: List<NeuralNetworkConnectionSpec>,
+        data: DoubleArray,
+    ) : this(
+        connections = createLayers(networkConnectionsIn, data),
+        data = data
+    )
+
+    class WeightsLayer(
         val index: Int,
         val matrix: Matrix,
         val startIndex: Int,
         val endIndex: Int,
-        val inputs: Int,
-        val outputs: Int,
+        val neuralNetworkConnectionSpec: NeuralNetworkConnectionSpec,
     )
 
-    constructor(
-        networkConnectionsIn: List<NetworkConnectionInfo>,
-        data: DoubleArray,
-    ) : this(weightsLayers = createLayers(networkConnectionsIn, data), data = data)
-
     companion object {
-        fun createLayers(
-            networkConnectionsIn: List<NetworkConnectionInfo>,
+        private fun createLayers(
+            networkConnectionsIn: List<NeuralNetworkConnectionSpec>,
             data: DoubleArray,
         ): List<WeightsLayer> {
             val weightsLayers = mutableListOf<WeightsLayer>()
             var lastEndIndex = 0
-            for (index in networkConnectionsIn.indices) {
-                val connection = networkConnectionsIn[index]
+            for ((index, connection) in networkConnectionsIn.withIndex()) {
                 val size = connection.weights + connection.biases
                 val newEndIndex = lastEndIndex + size
                 weightsLayers.add(
@@ -41,8 +65,7 @@ class WeightsAndBiases(
                         index = index,
                         startIndex = lastEndIndex,
                         endIndex = newEndIndex,
-                        inputs = connection.inputs,
-                        outputs = connection.outputs,
+                        neuralNetworkConnectionSpec = connection,
                         matrix =
                             Matrix(
                                 rows = connection.matrixRows,
@@ -58,15 +81,15 @@ class WeightsAndBiases(
         }
 
         fun populate(
-            networkConnectionsIn: List<NetworkConnectionInfo>,
+            networkConnectionsIn: List<NeuralNetworkConnectionSpec>,
             initMethod: (Int) -> Double,
-        ) = WeightsAndBiases(
+        ) = NeuralNetwork(
             networkConnectionsIn = networkConnectionsIn,
             initMethod = initMethod
         )
     }
 
-    constructor(networkConnectionsIn: List<NetworkConnectionInfo>, initMethod: (Int) -> Double) : this(
+    constructor(networkConnectionsIn: List<NeuralNetworkConnectionSpec>, initMethod: (Int) -> Double) : this(
         networkConnectionsIn = networkConnectionsIn,
         data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod)
     )
@@ -85,11 +108,88 @@ class WeightsAndBiases(
 
     fun evaluateActivations(input: DoubleArray): List<DoubleArray> {
         val activations: MutableList<DoubleArray> = mutableListOf(input)
-        for (layer in weightsLayers) {
+        for (layer in connections) {
             val arrayProduct: DoubleArray = layer.matrix * activations[layer.index].concat(1)
             activations.add(elementwiseSigmoid(arrayProduct))
         }
         return activations
+    }
+
+    private fun calculateGradientOfZ(
+        neuralNetwork: NeuralNetwork,
+        activations: List<DoubleArray>,
+        activationIndex: Int,
+        weightLayerIndex: Int,
+    ): DoubleArray {
+        val gradientOfZ = DoubleArray(neuralNetwork.data.size) { _ -> 0.0 }
+
+        // Own Bias
+        val numCols = neuralNetwork.connections[weightLayerIndex].matrix.cols
+        val currentWeightMatrixStartIndex = neuralNetwork.connections[weightLayerIndex].startIndex
+        val currentWeightMatrixRowStartIndex = currentWeightMatrixStartIndex + activationIndex * numCols
+        val biasIndex = currentWeightMatrixRowStartIndex + numCols - 1
+        gradientOfZ[biasIndex] = 1.0
+
+        // Own Weights
+        for (j in 0 until activations.last().size) {
+            val weightIndex = currentWeightMatrixRowStartIndex + j
+            gradientOfZ[weightIndex] = activations.last()[j]
+        }
+
+        // Gradients of activations (recursion happens here)
+        if (weightLayerIndex > 0) {
+            for (j in 0 until activations.last().size) {
+                val activationJ = activations.last()[j]
+                val weightIndex = currentWeightMatrixRowStartIndex + j
+                val weight = neuralNetwork.data[weightIndex]
+                val gradientOfActivation: DoubleArray =
+                    calculateActivationGradient(
+                        neuralNetwork,
+                        activations.dropLast(1),
+                        j,
+                        activationJ,
+                        weightLayerIndex - 1
+                    )
+                gradientOfZ.mutablyAddElementwise(weight * gradientOfActivation)
+            }
+        }
+
+        return gradientOfZ
+    }
+
+    internal fun calculateGradientForSample(
+        neuralNetwork: NeuralNetwork,
+        inputOutput: InputVsOutput,
+    ): DoubleArray {
+        val activations: List<DoubleArray> = neuralNetwork.evaluateActivations(inputOutput.input)
+        val theSumOverI = DoubleArray(neuralNetwork.data.size) { _ -> 0.0 }
+        for (activationIndex in 0 until neuralNetwork.connections.last().neuralNetworkConnectionSpec.outputs) {
+            val activationI = activations.last()[activationIndex]
+            val activationIMinusExpectedValue: Double = activationI - inputOutput.output[activationIndex]
+            val gradientOfActivationI: DoubleArray =
+                calculateActivationGradient(
+                    neuralNetwork,
+                    activations.dropLast(1),
+                    activationIndex,
+                    activationI,
+                    neuralNetwork.connections.lastIndex
+                )
+            theSumOverI.mutablyAddElementwise(activationIMinusExpectedValue * gradientOfActivationI)
+        }
+        return 2.0 * theSumOverI
+    }
+
+    private fun calculateActivationGradient(
+        neuralNetwork: NeuralNetwork,
+        activations: List<DoubleArray>,
+        activationIndex: Int,
+        activation: Double,
+        weightLayerIndex: Int,
+    ): DoubleArray {
+        val activationFunctionDerivative: Double = activation * (1.0 - activation)
+        val gradientOfZ: DoubleArray =
+            neuralNetwork.calculateGradientOfZ(neuralNetwork, activations, activationIndex, weightLayerIndex)
+        return activationFunctionDerivative * gradientOfZ
     }
 }
 

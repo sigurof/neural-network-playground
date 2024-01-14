@@ -3,7 +3,8 @@ package no.sigurof.ml.server.web.rest
 import kotlinx.serialization.Serializable
 import no.sigurof.ml.neuralnetwork.InputVsOutput
 import no.sigurof.ml.neuralnetwork.Record
-import no.sigurof.ml.server.web.OutMatrix
+import no.sigurof.ml.server.web.MatrixDto
+import no.sigurof.ml.server.web.common.NeuralNetworkDto
 
 @Serializable
 internal class InWeights(
@@ -13,8 +14,17 @@ internal class InWeights(
 )
 
 @Serializable
-data class OutTrainedNeuralNetwork(
-    val layers: List<OutMatrix>,
+data class ConnectionDto(
+    val inputs: Int,
+    val outputs: Int,
+    val weights: Int,
+    val biases: Int,
+    val matrix: MatrixDto,
+)
+
+@Serializable
+data class TrainedNeuralNetworkDto(
+    val neuralNetwork: NeuralNetworkDto,
     val record: List<Record>,
 )
 
