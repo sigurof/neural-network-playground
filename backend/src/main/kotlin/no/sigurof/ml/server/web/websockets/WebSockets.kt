@@ -43,7 +43,7 @@ fun Route.webSocketRoutes() {
                                 sessionId = event.sessionId
                                 when (event) {
                                     is ClientEvent.NewModel -> handleNewModel(event)
-                                    is ClientEvent.Continue -> handleContinueWithModel(event)
+                                    is ClientEvent.Continue -> handleContinueWithModel(event.sessionId)
                                 }
                             }
                     }
@@ -54,7 +54,7 @@ fun Route.webSocketRoutes() {
         } catch (e: Exception) {
             println("Connection with session $sessionId lost: ${e.localizedMessage}")
         } finally {
-            onClientDisconnected(sessionId)
+            println("Session $sessionId disconnected")
         }
     }
 }
@@ -73,8 +73,8 @@ private suspend fun WebSocketServerSession.sendServerEvent(data: ServerEvent) {
     send(Frame.Text(text))
 }
 
-private suspend fun WebSocketServerSession.handleContinueWithModel(event: ClientEvent.Continue) {
-    val state = sessions[event.sessionId] ?: error("Session ${event.sessionId} not found")
+private suspend fun WebSocketServerSession.handleContinueWithModel(sessionId: String) {
+    val state = sessions[sessionId] ?: error("Session $sessionId not found")
     trainNetworkMock(startI = state.progress)
         .collect { (index, value) ->
             state.progress = index
@@ -90,13 +90,7 @@ private suspend fun WebSocketServerSession.handleNewModel(event: ClientEvent.New
         // if model is new or override is true, set model and train
         sessions[event.sessionId] =
             Session(progress = 0, result = "", model = event.model)
-        val state = sessions[event.sessionId] ?: error("Session ${event.sessionId} not found")
-        trainNetworkMock(startI = state.progress)
-            .collect { (index, value) ->
-                state.progress = index
-                println("Sending update $index")
-                sendServerEvent(ServerEvent.Update("Update $index of 60", value))
-            }
+        handleContinueWithModel(event.sessionId)
     } else {
         // ... if sessionId collides, ask user to confirm override
         println("Asking client to confirm")
@@ -119,12 +113,3 @@ internal val webSocketsSerializersModule =
     }
 
 val json = Json { serializersModule = webSocketsSerializersModule }
-
-private fun onClientDisconnected(sessionId: String?) {
-    println("Session $sessionId disconnected")
-//    if (sessionId != null) {
-//        sessions[sessionId]?.let { state ->
-//            state.isActive = false
-//        }
-//    }
-}
