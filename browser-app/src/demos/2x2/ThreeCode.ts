@@ -111,6 +111,8 @@ function createBackgroundMesh(
     };
 }
 
+let scene: THREE.Scene | null = null;
+
 function createScene() {
     const elementById: HTMLCanvasElement | null = document.getElementById(
         "canvas",
@@ -119,7 +121,7 @@ function createScene() {
         console.warn("No canvas element found");
         return;
     }
-    const scene = new THREE.Scene();
+    scene = new THREE.Scene();
     const width = 800;
     const height = 600;
     // const width = window.innerWidth;
@@ -133,6 +135,10 @@ function createScene() {
     renderer.setSize(width, height);
     // two triangles of a square
     return { scene, renderer, aspect, camera };
+}
+
+export function tearDownScene() {
+    scene = null;
 }
 
 let now,

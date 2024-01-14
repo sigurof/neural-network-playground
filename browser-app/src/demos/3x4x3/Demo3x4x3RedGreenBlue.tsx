@@ -1,9 +1,11 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { startThree, threeJsInitialized } from "./ThreeCode.ts";
 import { circlesDataSets, TrainingData } from "./data.ts";
 
 const trainingData = circlesDataSets.nonLinear.circularRegion;
+const hiddenLayerDimensions = [4];
+
 export type Matrix = {
     rows: number;
     cols: number;
@@ -108,7 +110,7 @@ const MatrixRowInput = ({
     row: number[];
     handleChange: (value: number[]) => void;
 }) => {
-    console.log(row)
+    console.log(row);
     return (
         <div>
             {row.map((value, index) => {
@@ -142,7 +144,7 @@ function InputFieldsForMatrix({
     handleFormChange: (form: Matrix) => void;
     value: Matrix;
 }) {
-    console.log(value)
+    console.log(value);
     return (
         <div>
             <h3>Matrix {matrixIndex}</h3>
@@ -168,7 +170,7 @@ function InputFieldsForMatrix({
     );
 }
 
-export const Demo2x3x2RedAndBlue = () => {
+export const Demo3x4x3RedGreenBlue = () => {
     const [form, setForm] = useState<Matrix[]>(initialState);
     const controls = useRef<{
         hasChanged: boolean;
@@ -208,7 +210,7 @@ export const Demo2x3x2RedAndBlue = () => {
             })}
             <button
                 onClick={async () => {
-                    const result = await train(trainingData, [3]);
+                    const result = await train(trainingData, hiddenLayerDimensions);
                     const formData = castToSimpleNetworkLayer(result);
                     handleFormChange(formData);
                 }}
