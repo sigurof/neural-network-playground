@@ -45,7 +45,7 @@ class NeuralNetworkBuilder(
 
     private val inputLayer = trainingData.first().input.size
     private val outputLayer = trainingData.first().output.size
-    var networkConnections: List<NetworkConnectionInfo> =
+    private var networkConnections: List<NetworkConnectionInfo> =
         listOf(
             listOf(inputLayer),
             hiddenLayerDimensions,
@@ -105,17 +105,6 @@ class NeuralNetworkBuilder(
         return DoubleArray(this.size) { i -> this[i] / size }
     }
 
-    fun calculateGradientBackpropagation(
-        neuralNetwork: NeuralNetwork,
-        inputVsOutputs: List<InputVsOutput>,
-    ): DoubleArray {
-        val gradient = DoubleArray(neuralNetwork.weightsAndBiases.data.size) { _ -> 0.0 }
-        for (inputVsOutput in inputVsOutputs) {
-            gradient.mutablyAddElementwise(neuralNetwork.calculateGradientBackpropagation(inputVsOutput));
-        }
-        return gradient / (inputVsOutputs.size.toDouble());
-    }
-
     fun calculateGradientInefficiently(
         neuralNetwork: NeuralNetwork,
         trainingDataChunk: List<InputVsOutput>,
@@ -138,7 +127,7 @@ class NeuralNetworkBuilder(
         return NeuralNetwork(weightsAndBiases(data))
     }
 
-    fun weightsAndBiases(data: DoubleArray): WeightsAndBiases {
+    private fun weightsAndBiases(data: DoubleArray): WeightsAndBiases {
         return WeightsAndBiases(
             data = data,
             networkConnectionsIn = networkConnections
@@ -149,7 +138,7 @@ class NeuralNetworkBuilder(
         network: NeuralNetwork,
         trainingData: List<InputVsOutput>,
     ): DoubleArray {
-        val gradient: DoubleArray = DoubleArray(network.weightsAndBiases.data.size) { _ -> 0.0 }
+        val gradient = DoubleArray(network.weightsAndBiases.data.size) { _ -> 0.0 }
         for (inputOutput in trainingData) {
             val partGradient: DoubleArray = calculateGradientOfSample(network, inputOutput)
             gradient.mutablyAddElementwise(partGradient)
