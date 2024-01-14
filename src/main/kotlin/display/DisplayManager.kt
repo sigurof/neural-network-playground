@@ -1,0 +1,85 @@
+import java.lang.System.currentTimeMillis
+import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFW.glfwSwapBuffers
+import org.lwjgl.glfw.GLFWErrorCallback
+import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL20
+
+
+class DisplayManager {
+
+    companion object {
+        internal var WIDTH: Int = 1280
+        internal var HEIGHT: Int = 720
+        var FPS = 120
+        var window: Long? = null
+            private set
+        private var lastUpdate: Long = currentTimeMillis()
+
+        fun withWindowOpen(program: (window: Long) -> Unit) {
+            val window = createDisplay()
+            program(window)
+            closeDisplay(window)
+        }
+
+        fun eachFrameDo(func: (() -> Unit)) {
+            while (isOpen()) {
+                window
+                    ?.let {
+                        val now = currentTimeMillis()
+                        if (now - lastUpdate > (1000 / FPS).toLong()) {
+                            func.invoke()
+                            lastUpdate = now
+                            glfwSwapBuffers(it)
+                        }
+                        GLFW.glfwPollEvents()
+                    }
+            }
+        }
+
+        private fun windowResizeCallback(w: Long, width: Int, height: Int) {
+            resizeWindow(width, height)
+        }
+
+        fun resizeWindow(width: Int, height: Int) {
+            WIDTH = width
+            HEIGHT = height
+            GL20.glViewport(0, 0, WIDTH, HEIGHT)
+        }
+
+        private fun isOpen(): Boolean {
+            return window?.let { !GLFW.glfwWindowShouldClose(it) } ?: false
+        }
+
+        private fun closeDisplay(window: Long) {
+            GLFW.glfwDestroyWindow(window)
+        }
+
+        private fun createDisplay(): Long {
+            GLFWErrorCallback.createPrint(System.err).set();
+            if (!GLFW.glfwInit())
+                throw IllegalStateException("Unable to initialize GLFW");
+            GLFW.glfwWindowHint(GLFW.GLFW_RESIZABLE, GL20.GL_TRUE)
+            GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MAJOR, 4)
+            GLFW.glfwWindowHint(GLFW.GLFW_CONTEXT_VERSION_MINOR, 1)
+            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_FORWARD_COMPAT, GL20.GL_TRUE)
+            GLFW.glfwWindowHint(GLFW.GLFW_OPENGL_PROFILE, GLFW.GLFW_OPENGL_CORE_PROFILE)
+
+            window = GLFW.glfwCreateWindow(
+                WIDTH,
+                HEIGHT, "Hello Window", 0, 0
+            )
+            if (window == null || window == 0L) {
+                throw RuntimeException("Failed to create window!")
+            } else {
+                GLFW.glfwMakeContextCurrent(window!!)
+                GLFW.glfwShowWindow(window!!)
+                GL.createCapabilities()
+
+            }
+            GLFW.glfwSetWindowSizeCallback(window!!, ::windowResizeCallback)
+            return window!!
+
+        }
+    }
+}

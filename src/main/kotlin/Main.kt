@@ -1,9 +1,17 @@
 package org.example
 
+import DisplayManager
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.File
 import javax.imageio.ImageIO
+import org.joml.Vector2f
+import org.joml.Vector4f
+import org.lwjgl.glfw.GLFW
+import org.lwjgl.glfw.GLFWErrorCallback
+import org.lwjgl.opengl.GL
+import org.lwjgl.opengl.GL20
+import org.lwjgl.opengl.GL30
 
 open class Data<Value, Label>(
     val value: Value,
@@ -17,9 +25,63 @@ class PosVsColor(
 
 typealias Array1 = DoubleArray
 
+var WIDTH: Int = 1280
+var HEIGHT: Int = 720
+fun resizeWindow(width: Int, height: Int) {
+    WIDTH = width
+    HEIGHT = height
+    GL20.glViewport(0, 0, WIDTH, HEIGHT)
+}
 
+private fun windowResizeCallback(w: Long, width: Int, height: Int) {
+    resizeWindow(width, height)
+}
+
+private fun clearScreen(x: Float, y: Float, z: Float, w: Float) {
+    GL30.glClearColor(x, y, z, w)
+    GL30.glClear(GL30.GL_COLOR_BUFFER_BIT or GL30.GL_DEPTH_BUFFER_BIT)
+}
+
+private var lastUpdate: Long = System.currentTimeMillis()
+
+private fun clearScreen(background: Vector4f) {
+    GL30.glClear(GL30.GL_COLOR_BUFFER_BIT or GL30.GL_DEPTH_BUFFER_BIT)
+    GL30.glClearColor(background.x, background.y, background.z, background.w)
+}
+
+var FPS = 120
 fun main() {
+    val points: List<Vector2f> = listOf(
+        // a few randomly scattered points
+        Vector2f(-0.5f, 0.5f),
+        Vector2f(-0.25f, -0.15f),
+        Vector2f(0.5f, 0.5f),
+        Vector2f(0.75f, -0.5f),
+        Vector2f(0f, 0f)
 
+    )
+    DisplayManager.FPS = 60
+    DisplayManager.withWindowOpen { window ->
+        val shader: SphereShader = SphereShader()
+        val billboard: BillboardResource = BillboardManager.getBillboardResource()
+        DisplayManager.eachFrameDo {
+            clearScreen(0f, 0f, 0f, 0f)
+            shader.use()
+            shader.loadRadius(0.1f)
+            for (point in points) {
+                billboard.activate()
+                shader.loadCenter(point)
+                billboard.render()
+                billboard.deactivate()
+            }
+        }
+        ShaderManager.cleanUp()
+    }
+
+
+}
+
+fun trainingNeuralNetworkAndPngs() {
 //    val colorsList = blueCircleInRedBackgroundColorsList(100, 100);
 //    createPngFromColorsList(colorsList)
     val trainingData: List<PosVsColor> = leftRedRightBlue()
