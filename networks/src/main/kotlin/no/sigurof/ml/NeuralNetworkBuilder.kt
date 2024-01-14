@@ -45,7 +45,7 @@ class NeuralNetworkBuilder(
 
     private val inputLayer = trainingData.first().input.size
     private val outputLayer = trainingData.first().output.size
-    private var networkConnections: List<NetworkConnectionInfo> =
+    var networkConnections: List<NetworkConnectionInfo> =
         listOf(
             listOf(inputLayer),
             hiddenLayerDimensions,
@@ -54,16 +54,27 @@ class NeuralNetworkBuilder(
             .zipWithNext { nThis, nNext -> NetworkConnectionInfo(inputs = nThis, outputs = nNext) }
     private val trainingDataChunks: List<List<InputVsOutput>> = trainingData.chunked(100)
 
+    fun populateWeightsAndBiasesRaw(
+        initMethod: (Int) -> Double
+    ): NeuralNetwork {
+        return NeuralNetwork(
+            weightsAndBiases = WeightsAndBiases.populate(
+                networkConnectionsIn = networkConnections, initMethod = initMethod,
+            )
+        )
+
+    }
+
     fun trainOld(
         includeProfiling: Boolean = false,
     ): NeuralNetwork {
-        return train(includeProfiling, ::calculateGradientOld)
+        return train(includeProfiling, ::calculateGradientInefficiently)
     }
 
     fun trainNew(
         includeProfiling: Boolean = false,
     ): NeuralNetwork {
-        return train(includeProfiling, ::calculateGradient)
+        return train(includeProfiling, ::calculateGradientBackpropagation)
     }
 
     fun train(
@@ -94,7 +105,10 @@ class NeuralNetworkBuilder(
         return DoubleArray(this.size) { i -> this[i] / size }
     }
 
-    fun calculateGradient(neuralNetwork: NeuralNetwork, inputVsOutputs: List<InputVsOutput>): DoubleArray {
+    fun calculateGradientBackpropagation(
+        neuralNetwork: NeuralNetwork,
+        inputVsOutputs: List<InputVsOutput>,
+    ): DoubleArray {
         val gradient = DoubleArray(neuralNetwork.weightsAndBiases.data.size) { _ -> 0.0 }
         for (inputVsOutput in inputVsOutputs) {
             gradient.mutablyAddElementwise(neuralNetwork.calculateGradient(inputVsOutput));
@@ -102,7 +116,10 @@ class NeuralNetworkBuilder(
         return gradient / (inputVsOutputs.size.toDouble());
     }
 
-    fun calculateGradientOld(neuralNetwork: NeuralNetwork, trainingDataChunk: List<InputVsOutput>): DoubleArray {
+    fun calculateGradientInefficiently(
+        neuralNetwork: NeuralNetwork,
+        trainingDataChunk: List<InputVsOutput>,
+    ): DoubleArray {
         val weightsDimensions = neuralNetwork.weightsAndBiases.weightsLayers.sumOf { it.matrix.data.size }
         val functionValue = neuralNetwork.calculateCostFunction(trainingDataChunk)
         val delta = 0.0001

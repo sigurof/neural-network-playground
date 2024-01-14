@@ -38,7 +38,7 @@ fun Route.machineLearningRouting() {
         val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>();
         val includeProfiling = call.request.queryParameters["includeProfiling"]?.toBoolean() ?: false
         val neuralNetworkBuilder = NeuralNetworkBuilder(neuralNetworkParams )
-        val neuralNetwork: NeuralNetwork = neuralNetworkBuilder.trainOld(includeProfiling = includeProfiling)
+        val neuralNetwork: NeuralNetwork = neuralNetworkBuilder.trainNew(includeProfiling = includeProfiling)
         val weights: List<MatrixDto> = neuralNetwork.weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
         call.respond(MlResponse(layers = weights, record = neuralNetworkBuilder.record))
     }
