@@ -223,7 +223,7 @@ const ChartContainer = styled.div`
     grid-column-start: 2;
 `;
 
-export const Demo2x4x3RedGreenBlue = () => {
+export const Demo3x3x3x3RedGreenBlue = () => {
     const [form, setForm] = useState<Matrix[]>(initialState);
     const controls = useRef<{
         hasChanged: boolean;

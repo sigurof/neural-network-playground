@@ -5,11 +5,11 @@ import Contact from "./Contact.tsx";
 import { Demo2x2RedBlue } from "../demos/2x2/Demo2x2RedBlue.tsx";
 import { Demo2x3x2RedAndBlue } from "../demos/2x3x2/Demo2x3x2RedAndBlue.tsx";
 import React from "react";
-import { Demo2x4x3RedGreenBlue } from "../demos/2x4x3/Demo2x4x3RedGreenBlue.tsx";
+import { Demo3x3x3x3RedGreenBlue } from "../demos/2x4x3/Demo3x3x3x3RedGreenBlue.tsx";
 
-const path2x2 = "/ml/demos/2x2";
-const path2x3x2 = `/ml/demos/2x3x2`;
-const path2x4x3 = "/ml/demos/2x4x3";
+const path22 = "/ml/demos/22";
+const path232 = `/ml/demos/232`;
+const path3333 = "/ml/demos/3333";
 export const routes = [
     {
         path: "/",
@@ -21,18 +21,18 @@ export const routes = [
                 element: <Contact />,
             },
             {
-                path: path2x2,
+                path: path22,
                 element: <Demo2x2RedBlue />,
                 errorElement: <ErrorPage />,
             },
             {
-                path: path2x3x2,
+                path: path232,
                 element: <Demo2x3x2RedAndBlue />,
                 errorElement: <ErrorPage />,
             },
             {
-                path: path2x4x3,
-                element: <Demo2x4x3RedGreenBlue />,
+                path: path3333,
+                element: <Demo3x3x3x3RedGreenBlue />,
                 errorElement: <ErrorPage />,
             },
         ],
@@ -55,14 +55,14 @@ export default function Root() {
                                 </Link>
                             </li>
                             <li>
-                                <Link to={path2x2}>2x2 Red/Blue Demo</Link>
+                                <Link to={path22}>2x2 Red/Blue Demo</Link>
                             </li>
                             <li>
-                                <Link to={path2x3x2}>2x3x2 Red/Blue Demo</Link>
+                                <Link to={path232}>2x3x2 Red/Blue Demo</Link>
                             </li>
                             <li>
-                                <Link to={path2x4x3}>
-                                    3x4x3 Red/Green/Blue Demo
+                                <Link to={path3333}>
+                                    3x3x3x3 Red/Green/Blue Demo
                                 </Link>
                             </li>
                         </ul>

@@ -10,6 +10,7 @@ export type Matrix = {
     data: number[][];
 };
 
+const hiddenLayerDimensions = [3];
 const initialState: Matrix[] = [
     {
         rows: 3,
@@ -210,7 +211,7 @@ export const Demo2x3x2RedAndBlue = () => {
             })}
             <button
                 onClick={async () => {
-                    const result = await train(trainingData, [3]);
+                    const result = await train(trainingData, hiddenLayerDimensions);
                     const formData = castToSimpleNetworkLayer(result);
                     handleFormChange(formData);
                 }}
