@@ -2,15 +2,12 @@ package no.sigurof.routes
 
 import io.ktor.server.application.call
 import io.ktor.server.request.receive
-import io.ktor.server.request.receiveParameters
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.NeuralNetwork
 import no.sigurof.ml.NeuralNetworkBuilder
@@ -44,9 +41,9 @@ fun Route.machineLearningRouting() {
             trainingData = neuralNetworkParams.trainingData,
             hiddenLayerDimensions = neuralNetworkParams.hiddenLayerDimensions
         )
-        val neuralNetwork: NeuralNetwork = neuralNetworkBuilder.train(includeProfiling = includeProfiling)
+        val neuralNetwork: NeuralNetwork = neuralNetworkBuilder.train2(includeProfiling = includeProfiling)
 
-        val weights: List<MatrixDto> = neuralNetwork.weightsAndBiases.layers.map { it.matrix.toMatrixDto() }
+        val weights: List<MatrixDto> = neuralNetwork.weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
         call.respond(MlResponse(layers = weights, record = neuralNetworkBuilder.record))
     }
 }

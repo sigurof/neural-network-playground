@@ -63,8 +63,8 @@ fun plot2x3x2Network() {
         trainingData = realTrainingData,
         hiddenLayerDimensions = listOf(3),
     ).train()
-    val firstWeights = network.weightsAndBiases.layers[0]
-    val secondWeights = network.weightsAndBiases.layers[1]
+    val firstWeights = network.weightsAndBiases.weightsLayers[0]
+    val secondWeights = network.weightsAndBiases.weightsLayers[1]
     println("Cost is ${network.calculateCostFunction(realTrainingData)}")
     DisplayManager.FPS = 60
     DisplayManager.withWindowOpen { window ->
@@ -130,7 +130,7 @@ fun plot2x2Network() {
             setBackgroundColor(Vector4f(0.3f, 0.3f, 0.3f, 1f))
             shader.use()
             shader.loadAspectRatio(WIDTH.toFloat() / HEIGHT.toFloat())
-            shader.loadMatrix(network.weightsAndBiases.layers[0].matrix)
+            shader.loadMatrix(network.weightsAndBiases.weightsLayers[0].matrix)
             billboard.activate()
             billboard.render()
             circleShader.use()

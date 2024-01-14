@@ -2,7 +2,7 @@ package no.sigurof.ml
 
 import kotlin.math.sqrt
 
-fun interface Iterationcallback{
+fun interface Iterationcallback {
 
     fun invoke(step: Int, coordinate: DoubleArray, functionValue: Double)
 }
@@ -39,23 +39,31 @@ fun gradientDescentOld(
     return startCoord
 }
 
-//fun gradientDescent(n: Int, gradientFunction: (coordinate: DoubleArray) -> DoubleArray): DoubleArray {
-//    val learningRate = 6
-//    var startCoord = DoubleArray(n) { i -> Math.random() }
-//    var derivative = DoubleArray(n) { 10.0 }
-//    var steps = 0
-//    val d = 0.0003
-//    while (derivative.length() > d && steps < 4000) {
-//        val newCoord = DoubleArray(size = startCoord.size)
-//        derivative = gradientFunction.invoke(startCoord)
-//        for (index in startCoord.indices) {
-//            newCoord[index] = startCoord[index] - learningRate * derivative[index]
-//        }
-//        startCoord = newCoord
-//        steps++;
-//    }
-//    println("steps = $steps")
-//    return startCoord
+fun gradientDescent(n: Int, gradientFunction: (step: Int, coordinate: DoubleArray) -> DoubleArray,
+                    iterationCallback: Iterationcallback? = null,
+                    ): DoubleArray {
+    val learningRate = 5
+    var startCoord = DoubleArray(n) { i -> Math.random() }
+    var derivative = DoubleArray(n) { 1.0 }
+    var steps = 0
+    val d = 0.000003
+    while (derivative.length() > d && steps < 4000) {
+        println("steps = $steps, derivative = ${derivative.length()}")
+        iterationCallback?.invoke(steps, startCoord, 0.0)
+        val newCoord = DoubleArray(size = startCoord.size)
+        derivative = gradientFunction.invoke(steps, startCoord)
+        for (index in startCoord.indices) {
+            newCoord[index] = startCoord[index] - learningRate * derivative[index]
+        }
+        startCoord = newCoord
+        steps++;
+    }
+    println("steps = $steps")
+    return startCoord
+}
+
+//private operator fun DoubleArray.unaryMinus(): DoubleArray {
+//    TODO("Not yet implemented")
 //}
 
 private fun DoubleArray.increment(index: Int, delta: Double): DoubleArray {
