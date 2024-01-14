@@ -5,7 +5,6 @@ import io.kotest.matchers.throwable.shouldHaveMessage
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.matrixOfRows
 import no.sigurof.ml.matrixRow
-import no.sigurof.ml.visualization.toJomlMatrix
 import org.joml.Vector3f
 
 
@@ -13,20 +12,6 @@ class LinearAlgebraTest : FreeSpec({
 
     "something" - {
         1 shouldBe 1
-    }
-
-    "you can convert a 3x3 matrix to a joml matrix of same dimensions" - {
-        val matrix = Matrix(
-            rows = 3, data = doubleArrayOf(
-                1.0, 2.0, 3.0,
-                4.0, 5.0, 6.0,
-                7.0, 8.0, 9.0,
-            )
-        )
-        val jomlMatrix = matrix.toJomlMatrix()
-        jomlMatrix.getRow(0, Vector3f()) shouldBe Vector3f(1.0f, 2.0f, 3.0f)
-        jomlMatrix.getRow(1, Vector3f()) shouldBe Vector3f(4.0f, 5.0f, 6.0f)
-        jomlMatrix.getRow(2, Vector3f()) shouldBe Vector3f(7.0f, 8.0f, 9.0f)
     }
 
     "you can create a new matrix with an added row" - {
