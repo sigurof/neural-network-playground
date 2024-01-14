@@ -3,6 +3,7 @@ package no.sigurof
 import DisplayManager
 import DisplayManager.Companion.HEIGHT
 import DisplayManager.Companion.WIDTH
+import kotlin.math.sqrt
 import no.sigurof.ml.NeuralNetwork
 import no.sigurof.ml.NeuralNetworkBuilder
 import no.sigurof.ml.XY
@@ -10,6 +11,7 @@ import no.sigurof.ml.matrixOfRows
 import no.sigurof.no.sigurof.ml.PosVsColor
 import no.sigurof.no.sigurof.ml.leftRedRightBlue
 import no.sigurof.no.sigurof.ml.visualization.Network2x2Shader
+import no.sigurof.no.sigurof.ml.visualization.Network2x3x2Shader
 import no.sigurof.no.sigurof.plotting.BLUE
 import no.sigurof.no.sigurof.plotting.BillboardManager
 import no.sigurof.no.sigurof.plotting.Circle
@@ -59,16 +61,84 @@ import org.joml.sampling.UniformSampling.Sphere
 
 
 fun main() {
+    plot2x3x2Network();
+}
+
+fun plot2x3x2Network() {
+    val trainingData: List<PosVsColor> = randomlyDistributedPoints(n = 100).map { vec ->
+//        val boundaryY = 0.0
+//        val boundaryX = 0.0
+        PosVsColor(
+            pos = XY(vec.x.toDouble(), vec.y.toDouble()),
+            color = if (vec.x * vec.x + vec.y * vec.y < 0.5) "blue" else "red"
+        )
+    }
+    val circles = trainingData.map { vec ->
+        val x = vec.pos.x
+        val y = vec.pos.y
+        val color = if (vec.color == "red") RED else BLUE
+        Circle(center = Vector2f(x.toFloat(), y.toFloat()), radius = 0.01, color = color)
+    }
+    val network = NeuralNetworkBuilder(
+        layers = listOf(
+            2, 3, 2
+        )
+    ).train(trainingData)
+//    val network = NeuralNetwork(
+//        weights = listOf(matrix)
+//    )
+//    val firstWeights = matrixOfRows(
+//        doubleArrayOf(4.0, 4.0, -5.0),
+//        doubleArrayOf(-4.0, -4.0, 1.0),
+//        doubleArrayOf(0.0, 0.0, 0.0),
+//    )
+//    val secondWeights =  matrixOfRows(
+//        doubleArrayOf(4.0, 4.0, -5.0, 0.0),
+//        doubleArrayOf(-4.0, -4.0, 1.0, 0.0),
+//    )
+    val firstWeights = network.weights[0]
+    val secondWeights = network.weights[1]
+    println("Cost is ${network.calculateCostFunction(trainingData)}")
+    DisplayManager.FPS = 60
+    DisplayManager.withWindowOpen { window ->
+        val shader = Network2x3x2Shader()
+        val circleShader = SphereShader()
+        val billboard: BillboardResource = BillboardManager.getBillboardResource()
+        DisplayManager.eachFrameDo {
+            setBackgroundColor(Vector4f(0.3f, 0.3f, 0.3f, 1f))
+            shader.use()
+            shader.loadAspectRatio(WIDTH.toFloat() / HEIGHT.toFloat())
+            shader.loadFirstWeights(firstWeights)
+            shader.loadSecondWeights(secondWeights)
+//            shader.loadMatrix(matrix)
+            billboard.activate()
+            billboard.render()
+            circleShader.use()
+            circleShader.loadAspectRatio(WIDTH.toFloat() / HEIGHT.toFloat())
+            for (point in circles) {
+                circleShader.loadCenter(point.center)
+                circleShader.loadColor(point.color)
+                circleShader.loadRadius(point.radius.toFloat())
+                billboard.activate()
+                billboard.render()
+            }
+            billboard.deactivate()
+        }
+        ShaderManager.cleanUp()
+    }
+}
+
+fun plot2x2Network() {
 //    val matrix = matrixOfRows(
 //        doubleArrayOf(4.0, 4.0, -5.0),
 //        doubleArrayOf(-4.0, -4.0, 1.0),
 //    )
     val trainingData: List<PosVsColor> = randomlyDistributedPoints(n = 100).map { vec ->
-        val boundaryY = 0.5
-        val boundaryX = 200
+        val boundaryY = 0.0
+        val boundaryX = 0.0
         PosVsColor(
             pos = XY(vec.x.toDouble(), vec.y.toDouble()),
-            color = if (vec.x < boundaryX && vec.y < boundaryY) "blue" else "red"
+            color = if (vec.x + vec.y < boundaryX) "blue" else "red"
         )
     }
     val circles = trainingData.map { vec ->
