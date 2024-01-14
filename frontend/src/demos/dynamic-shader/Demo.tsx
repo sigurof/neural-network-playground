@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { CircleData, startThree, threeJsInitialized } from "./ThreeCode.ts";
-import {
-    circlesDataSets as circlesDataSets2,
-    MLInputOutput,
-    TrainingData,
-} from "./data.ts";
+import { circlesDataSets as circlesDataSets2, MLInputOutput, TrainingData } from "./data.ts";
 import { Slider } from "@mui/material";
 import styled from "styled-components";
 import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
@@ -19,8 +15,7 @@ export type Matrix = {
     data: number[][];
 };
 
-const mlTrainingData: MLInputOutput[] =
-    circlesDataSets.abc.redAndBlue;
+const mlTrainingData: MLInputOutput[] = circlesDataSets.abc.redAndBlue;
 const circleData: CircleData[] = mlTrainingData.map((data) => {
     return {
         pos: {
@@ -35,11 +30,7 @@ const circleData: CircleData[] = mlTrainingData.map((data) => {
     };
 });
 const hiddenLayerDimensions: number[] = [8, 6];
-const layerDimensions = [
-    mlTrainingData[0].input.length,
-    ...hiddenLayerDimensions,
-    mlTrainingData[0].output.length,
-];
+const layerDimensions = [mlTrainingData[0].input.length, ...hiddenLayerDimensions, mlTrainingData[0].output.length];
 const zipWithNext = (arr: number[]) => {
     const result: { left: number; right: number }[] = [];
     for (let i = 0; i < arr.length - 1; i++) {
@@ -48,10 +39,7 @@ const zipWithNext = (arr: number[]) => {
     return result;
 };
 
-function calculateWeightsAndBiasesDimensions(
-    inputNodes: number,
-    outputNodes: number,
-) {
+function calculateWeightsAndBiasesDimensions(inputNodes: number, outputNodes: number) {
     const numberOfBiases = outputNodes;
     const numberOfWeights = inputNodes * outputNodes;
     return numberOfWeights + numberOfBiases;
@@ -61,9 +49,7 @@ export type NetworkConnection = {
     rows: number;
     columns: number;
 };
-const weightsAndBiasesDimensions: NetworkConnection[] = zipWithNext(
-    layerDimensions,
-).map(({ left, right }) => {
+const weightsAndBiasesDimensions: NetworkConnection[] = zipWithNext(layerDimensions).map(({ left, right }) => {
     return {
         rows: right,
         columns: left + 1, // +1 for the bias
@@ -80,10 +66,7 @@ const initialState: Matrix[] = weightsAndBiasesDimensions.map((dimensions) => {
     };
 });
 
-async function train(
-    trainingData: TrainingData,
-    hiddenLayerDimensions: number[],
-): Promise<unknown> {
+async function train(trainingData: TrainingData, hiddenLayerDimensions: number[]): Promise<unknown> {
     const res = await axios.post(
         "http://localhost:8080/ml/network",
         {
@@ -122,6 +105,7 @@ function castToSimpleNetworkLayer(data: unknown): Matrix[] {
 const MyLabel = styled.label`
     grid-column-start: 1;
 `;
+
 const SliderContainer = styled.div`
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -161,6 +145,7 @@ const WeightBiasInput = ({
         </SliderContainer>
     );
 };
+
 const MatrixRowWrapper = styled.div`
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -268,11 +253,7 @@ function evaluateNetwork(row: number, col: number, form: Matrix[]): RGBColor {
     const activations = [[row, col]];
     let lastActivations = 0;
     for (const matrix of form) {
-        activations.push(
-            elementwiseSigmoid(
-                matrixMultiplication(matrix, activations[lastActivations]),
-            ),
-        );
+        activations.push(elementwiseSigmoid(matrixMultiplication(matrix, activations[lastActivations])));
         lastActivations++;
     }
     const activation = activations[activations.length - 1];
@@ -280,25 +261,39 @@ function evaluateNetwork(row: number, col: number, form: Matrix[]): RGBColor {
     if (activation.length !== 2) {
         throw new Error("activation does not have length 2");
     }
-    return [
-        Math.round(activation[0] * 255),
-        0,
-        Math.round(activation[1] * 255),
-    ];
+    return [Math.round(activation[0] * 255), 0, Math.round(activation[1] * 255)];
 }
 
 async function askBackendForImage(form: Matrix[]) {
     // Call backend ml/evaluate endpoint with the form variable as the body
     // Receive a png image byte stream
-    const response = await axios.post(
-        "http://localhost:8080/ml/evaluate",
-        form,
-        {
-            responseType: "blob",
-        },
-    );
+    const response = await axios.post("http://localhost:8080/ml/evaluate", form, {
+        responseType: "blob",
+    });
     return URL.createObjectURL(response.data);
 }
+
+const useCharts = () => {
+    const chartUpdater = useRef<{
+        updateChart: (points: { x: number; y: number }[]) => void;
+        destroy: () => void;
+    } | null>(null);
+    useEffect(() => {
+        return () => {
+            chartUpdater.current?.destroy();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!chartInitialized) {
+            const startChartJs1 = startChartJs();
+            chartUpdater.current = {
+                ...startChartJs1!,
+            };
+        }
+    }, []);
+    return chartUpdater;
+};
 
 export const Demo = () => {
     const [form, setForm] = useState<Matrix[]>(initialState);
@@ -306,10 +301,7 @@ export const Demo = () => {
         update: (form: Matrix[]) => void;
         tearDown: () => void;
     } | null>(null);
-    const chartUpdater = useRef<{
-        update: (points: { x: number; y: number }[]) => void;
-        destroy: () => void;
-    } | null>(null);
+    const chartUpdater = useCharts();
 
     function handleFormChange(form: Matrix[]) {
         setForm(form);
@@ -320,26 +312,12 @@ export const Demo = () => {
     useEffect(() => {
         return () => {
             threeJsController.current?.tearDown();
-            chartUpdater.current?.destroy();
         };
     }, []);
 
     useEffect(() => {
-        if (!chartInitialized) {
-            const startChartJs1 = startChartJs();
-            chartUpdater.current = {
-                update: startChartJs1!.updateChart,
-                destroy: startChartJs1!.destroy,
-            };
-        }
-    }, []);
-    useEffect(() => {
         if (!threeJsInitialized) {
-            const result = startThree(
-                form,
-                circleData,
-                weightsAndBiasesDimensions,
-            );
+            const result = startThree(form, circleData, weightsAndBiasesDimensions);
             if (result) {
                 threeJsController.current = {
                     update: result.update,
@@ -372,14 +350,11 @@ export const Demo = () => {
             })}
             <button
                 onClick={async () => {
-                    const result = await train(
-                        mlTrainingData,
-                        hiddenLayerDimensions,
-                    );
+                    const result = await train(mlTrainingData, hiddenLayerDimensions);
                     const formData = castToSimpleNetworkLayer(result);
                     const statistics = castToStats(result);
                     handleFormChange(formData);
-                    chartUpdater.current!.update(
+                    chartUpdater.current!.updateChart(
                         statistics.map((stat) => {
                             return { x: stat.step, y: stat.cost };
                         }),

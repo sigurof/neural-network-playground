@@ -5,16 +5,46 @@ import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
+import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import kotlinx.serialization.Serializable
 import no.sigurof.ml.neuralnetwork.NetworkConnectionInfo
 import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
 import no.sigurof.ml.neuralnetwork.WeightsAndBiases
+import no.sigurof.ml.server.Model
+import no.sigurof.ml.server.Session
+import no.sigurof.ml.server.sessions
 import no.sigurof.ml.utils.Matrix
 
+@Serializable
+class SessionDto(
+    var id: String,
+    var awaitingUserResponse: Boolean = false,
+    var progress: Int,
+    var result: String,
+    var isActive: Boolean = true,
+    var model: Model? = null,
+)
+
+fun Map.Entry<String, Session>.toResponse() =
+    SessionDto(
+        id = this.key,
+        awaitingUserResponse = this.value.awaitingUserResponse,
+        progress = this.value.progress,
+        result = this.value.result,
+        isActive = this.value.isActive,
+        model = this.value.model
+    )
+
 fun Route.machineLearningRouting() {
+    get("/ml/sessions") {
+        val message: List<SessionDto> = sessions.map { it.toResponse() }
+        call.respond(message)
+    }
+
     post("/ml/network") {
         val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>()
         val shouldRecordCostFunction = call.request.queryParameters["recordCostFunction"]?.toBoolean() ?: false

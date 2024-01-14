@@ -7,6 +7,7 @@ import { Demo2x3x2RedAndBlue } from "../demos/2x3x2/Demo2x3x2RedAndBlue.tsx";
 import React from "react";
 import { Demo as Demo4Layers } from "../demos/2x3x3x3/Demo.tsx";
 import { Demo as DemoDynamicShader } from "../demos/dynamic-shader/Demo.tsx";
+import { Demo as MnistDemo } from "../demos/mnist/Demo.tsx";
 
 const path22 = "/ml/demos/22";
 const path232 = `/ml/demos/232`;
@@ -42,7 +43,7 @@ export const routes = [
                 element: <DemoDynamicShader />,
                 errorElement: <ErrorPage />,
             },
-            { path: "MNIST", element: <div> MNIST </div>, errorElement: <ErrorPage /> },
+            { path: "MNIST", element: <MnistDemo/>, errorElement: <ErrorPage /> },
         ],
     },
 ];

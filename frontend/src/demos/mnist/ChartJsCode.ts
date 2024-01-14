@@ -1,5 +1,6 @@
-import { Chart, registerables, ChartConfiguration, ChartData } from "chart.js";
+import { Chart, ChartConfiguration, ChartData, registerables } from "chart.js";
 import { range } from "../../utils.ts";
+import { useEffect, useRef } from "react";
 // import { ChartConfiguration } from "@types/chart.js";
 
 export let chartInitialized = false;
@@ -17,7 +18,6 @@ export const startChartJs = () => {
         y: i * i,
     }));
     const labels: string[] = points.map((d) => `${d.x}`);
-    console.log("labels", labels);
     const data: ChartData = {
         labels: labels,
         datasets: [
@@ -36,8 +36,9 @@ export const startChartJs = () => {
         type: "line",
         data: data,
         options: {
+            aspectRatio: 1,
             maintainAspectRatio: false,
-            responsive: true,
+            responsive: false,
             plugins: {
                 legend: {
                     position: "top",
@@ -51,17 +52,34 @@ export const startChartJs = () => {
     };
     // @ts-expect-error Expected
     const chart = new Chart(ctx, config);
-
-    const updateChart = (points: { x: number; y: number }[]) => {
-        console.log("updateChart", points);
-        chart.data.datasets[0].data = points;
-        chart.data.labels = points.map((d) => `${d.x}`);
-        chart.update();
-    };
     return {
-        updateChart,
-        destroy: ()=>{
-            chart.destroy();
-        }
+        updateChart: (points: { x: number; y: number }[]) => {
+            chart.data.datasets[0].data = points;
+            chart.data.labels = points.map((d) => `${d.x}`);
+            chart.update();
+        },
+        destroy: () => chart.destroy(),
     };
+};
+
+type ChartControls = {
+    updateChart: (points: { x: number; y: number }[]) => void;
+    destroy: () => void;
+};
+export const useCharts = () => {
+    const chartControls = useRef<ChartControls | null>(null);
+    useEffect(() => {
+        return () => {
+            chartControls.current?.destroy();
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!chartInitialized) {
+            chartControls.current = {
+                ...startChartJs()!,
+            };
+        }
+    }, []);
+    return { chartControls };
 };
