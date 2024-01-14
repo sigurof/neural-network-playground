@@ -1,8 +1,8 @@
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
-import axios, { AxiosResponse } from "axios";
+import axios from "axios";
 import { startThree, threeJsInitialized } from "./ThreeCode.ts";
 
-const GetInput2 = ({
+export const Input = ({
     name,
     value,
     handleChange,
@@ -15,7 +15,6 @@ const GetInput2 = ({
         <div>
             <label htmlFor={"input" + name}>{name}</label>
             <input
-                key={"input" + name}
                 id={"input" + name}
                 type="range"
                 min="-10" // Set the minimum value of the slider
@@ -28,7 +27,7 @@ const GetInput2 = ({
     );
 };
 
-type Form = {
+export type Form = {
     bias0: number;
     weight00: number;
     weight11: number;
@@ -37,7 +36,7 @@ type Form = {
     bias1: number;
 };
 
-type WeightOrBias = keyof Form;
+export type WeightOrBiasName = keyof Form;
 
 const initialState: Form = {
     weight00: Math.random(),
@@ -53,14 +52,37 @@ const circlesInputOutput: { input: number[]; output: number[] }[] = Array.from(
     () => {
         const x = (Math.random() - 0.5) * 2;
         const y = (Math.random() - 0.5) * 2;
-        let blue = [0.0, 1.0];
-        let red = [1.0, 0.0];
+        const blue = [0.0, 1.0];
+        const red = [1.0, 0.0];
         return {
             input: [x, y],
             output: x + y < 0.5 ? red : blue,
         };
     },
 );
+
+async function train(): Promise<Form> {
+    const res = await axios.post(
+        "http://localhost:8080/ml/network",
+        {
+            trainingData: circlesInputOutput,
+            hiddenLayerDimensions: [],
+        },
+        {
+            headers: {
+                "Content-Type": "application/json",
+            },
+        },
+    );
+    return {
+        weight00: res.data[0].data[0],
+        weight01: res.data[0].data[1],
+        bias0: res.data[0].data[2],
+        weight10: res.data[0].data[3],
+        weight11: res.data[0].data[4],
+        bias1: res.data[0].data[5],
+    };
+}
 
 export const Demo2x2RedBlue = () => {
     const [startValues, setStartValues] = useState<Form>(initialState);
@@ -69,18 +91,23 @@ export const Demo2x2RedBlue = () => {
         formValues: Form;
     } | null>(null);
 
+    function handleFormChange(form: Form) {
+        setStartValues(form);
+        controls.current!.formValues = form;
+        controls.current!.hasChanged = true;
+    }
+
     function handleChange(
         e: ChangeEvent<HTMLInputElement>,
-        name: WeightOrBias,
+        name: WeightOrBiasName,
     ) {
         const value = Number(e.target.value);
         if (!isNaN(value)) {
-            setStartValues((prev) => ({
-                ...prev,
+            const newForm = {
+                ...startValues,
                 [name]: value,
-            }));
-            controls.current!.hasChanged = true;
-            controls.current!.formValues[name] = value;
+            };
+            handleFormChange(newForm);
         }
     }
 
@@ -92,57 +119,21 @@ export const Demo2x2RedBlue = () => {
             }
         }
     }, []);
-    console.log(startValues);
 
     return (
         <>
-            {Object.keys(startValues).map((it) => (
-                <GetInput2
-                    name={it}
-                    value={startValues[it as WeightOrBias]}
-                    handleChange={(e) => handleChange(e, it as WeightOrBias)}
+            {Object.keys(startValues).map((name) => (
+                <Input
+                    key={`input${name}`}
+                    name={name}
+                    value={startValues[name as WeightOrBiasName]}
+                    handleChange={(e) =>
+                        handleChange(e, name as WeightOrBiasName)
+                    }
                 />
             ))}
             <button
-                onClick={() => {
-                    axios
-                        .post(
-                            "http://localhost:8080/ml/network",
-                            {
-                                trainingData: circlesInputOutput,
-                                hiddenLayerDimensions: [],
-                            },
-                            {
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                            },
-                        )
-                        .then(
-                            (
-                                res: AxiosResponse<
-                                    {
-                                        rows: number;
-                                        cols: number;
-                                        data: number[];
-                                    }[]
-                                >,
-                            ) => {
-                                console.log(res.data);
-                                const newVar = {
-                                    weight00: res.data[0].data[0],
-                                    weight01: res.data[0].data[1],
-                                    bias0: res.data[0].data[2],
-                                    weight10: res.data[0].data[3],
-                                    weight11: res.data[0].data[4],
-                                    bias1: res.data[0].data[5],
-                                };
-                                setStartValues(newVar);
-                                controls.current!.formValues = newVar;
-                                controls.current!.hasChanged = true;
-                            },
-                        );
-                }}
+                onClick={() => train().then((form) => handleFormChange(form))}
             >
                 Train!
             </button>
