@@ -17,12 +17,11 @@ export function initShaderProgram(
     // If creating the shader program failed, alert
 
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-        alert(
+        throw Error(
             `Unable to initialize the shader program: ${gl.getProgramInfoLog(
                 shaderProgram,
             )}`,
         );
-        throw Error("Unable to initialize the shader program");
     }
 
     return shaderProgram;
@@ -47,13 +46,13 @@ export function loadShader(
     // See if it compiled successfully
 
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert(
-            `An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`,
-        );
         gl.deleteShader(shader);
-        throw Error("Unable to compile shader");
+        throw Error(
+            `An error occurred compiling the shaders: ${gl.getShaderInfoLog(
+                shader,
+            )}`,
+        );
     }
 
     return shader;
 }
-
