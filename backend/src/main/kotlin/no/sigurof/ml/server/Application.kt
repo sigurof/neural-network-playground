@@ -100,11 +100,19 @@ sealed class ServerEvent {
 
 @Serializable
 sealed class ClientEvent {
-    abstract val sessionId: String?
+    abstract val sessionId: String
+
+    fun assertSessionIdNotBlank() {
+        require(sessionId.isNotBlank()) { "sessionId cannot be blank" }
+    }
 
     @Serializable
     @SerialName("Continue")
-    data class Continue(override val sessionId: String?) : ClientEvent()
+    data class Continue(override val sessionId: String) : ClientEvent() {
+        init {
+            assertSessionIdNotBlank()
+        }
+    }
 
     @Serializable
     @SerialName("NewModel")
@@ -114,7 +122,11 @@ sealed class ClientEvent {
         val hiddenLayers: List<Int>,
         val sizeDataSet: Int,
     ) :
-        ClientEvent()
+        ClientEvent() {
+        init {
+            assertSessionIdNotBlank()
+        }
+    }
 }
 
 val mySerializersModule =
@@ -193,8 +205,6 @@ suspend fun WebSocketServerSession.handleNewModel(event: ClientEvent.NewModel) {
         sendServerEvent(ServerEvent.AskSetModel)
     }
 }
-
-// }
 
 fun Route.webSocketRouting() {
     webSocket("/ml/network") {

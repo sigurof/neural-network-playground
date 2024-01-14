@@ -1,5 +1,4 @@
 import { Link, Outlet } from "react-router-dom";
-import "./route.css";
 import { ErrorPage } from "../ErrorPage.tsx";
 import Contact from "./Contact.tsx";
 import { Demo2x2RedBlue } from "../demos/2x2/Demo2x2RedBlue.tsx";
@@ -8,6 +7,7 @@ import React from "react";
 import { Demo as Demo4Layers } from "../demos/2x3x3x3/Demo.tsx";
 import { Demo as DemoDynamicShader } from "../demos/dynamic-shader/Demo.tsx";
 import { Demo as MnistDemo } from "../demos/mnist/Demo.tsx";
+import styled from "styled-components";
 
 const path22 = "/ml/demos/22";
 const path232 = `/ml/demos/232`;
@@ -43,15 +43,33 @@ export const routes = [
                 element: <DemoDynamicShader />,
                 errorElement: <ErrorPage />,
             },
-            { path: "MNIST", element: <MnistDemo/>, errorElement: <ErrorPage /> },
+            { path: "MNIST", element: <MnistDemo />, errorElement: <ErrorPage /> },
         ],
     },
 ];
+
+const Sidebar = styled.div`
+    width: 22rem;
+    background-color: #f7f7f7;
+    border-right: solid 1px #e3e3e3;
+    display: flex;
+    flex-direction: column;
+    min-width: fit-content;
+`;
+const Wrapper = styled.div`
+    display: flex;
+    grid-template-columns: 1fr 3fr;
+`;
+const Detail = styled.div`
+    flex: 1;
+    padding: 2rem;
+    width: 100%;
+`;
 export default function Root() {
     return (
         <>
-            <div id={"wrapper"}>
-                <div id="sidebar">
+            <Wrapper>
+                <Sidebar>
                     <h1>Demos side bar</h1>
                     <nav>
                         <ul>
@@ -78,11 +96,11 @@ export default function Root() {
                             </li>
                         </ul>
                     </nav>
-                </div>
-                <div id="detail">
+                </Sidebar>
+                <Detail>
                     <Outlet />
-                </div>
-            </div>
+                </Detail>
+            </Wrapper>
         </>
     );
 }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import axios from "axios";
-import { Box, Button, CircularProgress, Slider, TextField, Typography } from "@mui/material";
+import { Box, Button, CircularProgress, MenuItem, Select, Slider, TextField, Typography } from "@mui/material";
 import { SectionBox } from "../Common.tsx";
 import styled from "styled-components";
 import { styled as muiStyled } from "@mui/material/styles";
@@ -10,13 +10,13 @@ function valuetext(value: number) {
     return `${value}°C`;
 }
 
-const gridContainer = {
-    width: "400px",
-    maxHeight: "200px",
-    display: "grid",
-    gridTemplateColumns: "1fr",
-    gridTemplateRows: "1fr 1fr",
-};
+const GridContainer = styled.div`
+    width: 400px;
+    max-height: 200px;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+`;
 
 const Grid = styled.div`
     margin: 8px;
@@ -45,15 +45,11 @@ function continueEvent(sessionId: string): string {
     });
 }
 
-function newModelEvent(sessionId: string, layers: string, numTraining: number, override: boolean) {
+function newModelEvent(sessionId: string, hiddenLayers: number[], sizeDataSet: number, override: boolean) {
     const payload = {
         type: "NewModel",
-        hiddenLayers: layers
-            .split(",")
-            .map((it) => it.trim())
-            .filter((it) => it)
-            .map((it) => parseInt(it)),
-        sizeDataSet: numTraining,
+        hiddenLayers,
+        sizeDataSet,
         sessionId,
         override,
     };
@@ -69,12 +65,23 @@ type SessionDto = {
     model?: never;
 };
 
+function parseHiddenLayers(layers: string) {
+    console.log(layers)
+    return layers
+        .split(",")
+        .map((it) => it.trim())
+        .filter((it) => it)
+        .map((it) => parseInt(it));
+}
+
 export const CreateModel = () => {
     const [layers, setLayers] = useState<string>("");
     const [numTraining, setNumTraining] = useState<number>(50000);
     const [running, setRunning] = useState(false);
     const [askToOverride, setAskToOverride] = useState(false);
     const webSocket = useRef<WebSocket | null>();
+    const [sessionIdSelect, setSessionIdSelect] = useState<string>("New");
+    const [sessionId, setSessionId] = useState<string>("");
     const [sessions, setSessions] = useState<SessionDto[]>([]);
     const [awaitingResponse, setAwaitingResponse] = useState(false);
     useEffect(() => {
@@ -110,14 +117,46 @@ export const CreateModel = () => {
                 }}
                 onContinue={() => {
                     closeModal();
-                    webSocket.current?.send(continueEvent("asdf"));
+                    webSocket.current?.send(continueEvent(sessionId));
                 }}
                 onOverride={() => {
                     closeModal();
-                    webSocket.current?.send(newModelEvent("asdf", layers, numTraining, true));
+                    const hiddenLayers = parseHiddenLayers(layers);
+                    console.log(hiddenLayers)
+                    webSocket.current?.send(newModelEvent(sessionId, hiddenLayers, numTraining, true));
                 }}
             />
-            <Box sx={gridContainer}>
+
+            <GridContainer>
+                <Grid>
+                    <Select
+                        value={sessionIdSelect}
+                        onChange={(event, _) => {
+                            const value = event.target.value as string;
+                            setSessionIdSelect(value);
+                            if (value !== "New") {
+                                setSessionId(value);
+                            }else{
+                                setSessionId("");
+                            }
+                        }}
+                    >
+                        <MenuItem value={"New"}>New</MenuItem>
+                        {sessions.map((it) => (
+                            <MenuItem key={`session-${it.id}`} value={it.id}>
+                                {it.id}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                    {sessionIdSelect === "New" && (
+                        <TextField
+                            onChange={(e) => {
+                                setSessionId(e.target.value);
+                            }}
+                            value={sessionId}
+                        />
+                    )}
+                </Grid>
                 <Grid>
                     <TextField
                         style={{
@@ -150,7 +189,7 @@ export const CreateModel = () => {
                         valueLabelDisplay="auto"
                     />
                 </Grid>
-            </Box>
+            </GridContainer>
             <ButtonContainer>
                 <LargeButton
                     onClick={() => {
@@ -161,7 +200,7 @@ export const CreateModel = () => {
                             setAwaitingResponse(true);
                             const socket = new WebSocket("ws://localhost:8080/ml/network");
                             socket.addEventListener("open", () => {
-                                socket.send(newModelEvent("asdf", layers, numTraining, false));
+                                socket.send(newModelEvent(sessionId, parseHiddenLayers(layers), numTraining, false));
                             });
                             socket.addEventListener("message", (event) => {
                                 const data = JSON.parse(event.data);
