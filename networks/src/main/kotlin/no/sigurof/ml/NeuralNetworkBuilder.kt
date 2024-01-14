@@ -1,6 +1,8 @@
 package no.sigurof.ml
 
+import kotlin.random.Random
 import kotlinx.serialization.Serializable
+import no.sigurof.models.NeuralNetworkParams
 
 
 @Serializable
@@ -34,6 +36,11 @@ class NeuralNetworkBuilder(
     hiddenLayerDimensions: List<Int>,
     private val trainingData: List<InputVsOutput>,
 ) {
+    constructor(hiddenLayerDimensions: NeuralNetworkParams) : this(
+        hiddenLayerDimensions = hiddenLayerDimensions.hiddenLayerDimensions,
+        trainingData = hiddenLayerDimensions.trainingData
+    )
+
     val record = mutableListOf<Record>()
 
     private val inputLayer = trainingData.first().input.size
@@ -47,17 +54,35 @@ class NeuralNetworkBuilder(
             .zipWithNext { nThis, nNext -> NetworkConnectionInfo(inputs = nThis, outputs = nNext) }
     private val trainingDataChunks: List<List<InputVsOutput>> = trainingData.chunked(100)
 
-    fun train(includeProfiling: Boolean = false): NeuralNetwork {
+    fun trainOld(
+        includeProfiling: Boolean = false,
+    ): NeuralNetwork {
+        return train(includeProfiling, ::calculateGradientOld)
+    }
+
+    fun trainNew(
+        includeProfiling: Boolean = false,
+    ): NeuralNetwork {
+        return train(includeProfiling, ::calculateGradient)
+    }
+
+    fun train(
+        includeProfiling: Boolean = false,
+        gradientFunction: (NeuralNetwork, List<InputVsOutput>) -> DoubleArray,
+    ): NeuralNetwork {
         val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
-        val costFunctionMin = gradientDescentOld(n = weightsDimensions,
-            costFuncion = { step, weightsVector ->
-                val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
-                NeuralNetwork(
-                    weightsAndBiases(weightsVector)
-                ).calculateCostFunction(trainingDataChunk)
+        var trainingDataChunk: List<InputVsOutput> = trainingDataChunks.first()
+        val costFunctionMin = gradientDescent(
+            learningRate = 4.0,
+            startingCoordinate = DoubleArray(weightsDimensions) { Random.nextDouble(-1.0, 1.0) },
+            gradientFunction = { step, weightsVector ->
+                trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
+                val neuralNetwork = buildNetwork(weightsVector)
+                gradientFunction(neuralNetwork, trainingDataChunk)
             },
-            iterationCallback = { step, coordinate, functionValue ->
-                record.add(Record(step = step, cost = functionValue))
+            iterationCallback = { step, coordinate, _ ->
+                val cost = buildNetwork(coordinate).calculateCostFunction(trainingDataChunk)
+                record.add(Record(step = step, cost = cost))
             }
         )
         return NeuralNetwork(
@@ -65,22 +90,31 @@ class NeuralNetworkBuilder(
         )
     }
 
-    fun train2(includeProfiling: Boolean = false): NeuralNetwork {
-        val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
-        val costFunctionMin = gradientDescent(n = weightsDimensions,
-            gradientFunction = { step, weightsVector ->
-                val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
-                NeuralNetwork(
-                    weightsAndBiases(weightsVector)
-                ).calculateGradient(trainingDataChunk) / (trainingDataChunk.size.toDouble())
-            },
-            iterationCallback = { step, coordinate, functionValue ->
-                record.add(Record(step = step, cost = buildNetwork(coordinate).calculateCostFunction(trainingData)))
-            }
-        )
-        return NeuralNetwork(
-            weightsAndBiases(costFunctionMin)
-        )
+    private operator fun DoubleArray.div(size: Double): DoubleArray {
+        return DoubleArray(this.size) { i -> this[i] / size }
+    }
+
+    fun calculateGradient(neuralNetwork: NeuralNetwork, inputVsOutputs: List<InputVsOutput>): DoubleArray {
+        val gradient = DoubleArray(neuralNetwork.weightsAndBiases.data.size) { _ -> 0.0 }
+        for (inputVsOutput in inputVsOutputs) {
+            gradient.mutablyAddElementwise(neuralNetwork.calculateGradient(inputVsOutput));
+        }
+        return gradient / (inputVsOutputs.size.toDouble());
+    }
+
+    fun calculateGradientOld(neuralNetwork: NeuralNetwork, trainingDataChunk: List<InputVsOutput>): DoubleArray {
+        val weightsDimensions = neuralNetwork.weightsAndBiases.weightsLayers.sumOf { it.matrix.data.size }
+        val functionValue = neuralNetwork.calculateCostFunction(trainingDataChunk)
+        val delta = 0.0001
+        val derivative = DoubleArray(weightsDimensions) { 10.0 }
+        val weightsVector = neuralNetwork.weightsAndBiases.data
+        for (index in 0 until weightsDimensions) {
+            val functionValueIncr = NeuralNetwork(
+                weightsAndBiases(weightsVector.increment(index, delta))
+            ).calculateCostFunction(trainingDataChunk)
+            derivative[index] = (functionValueIncr - functionValue) / delta
+        }
+        return derivative
     }
 
     fun buildNetwork(data: DoubleArray): NeuralNetwork {
@@ -95,6 +129,3 @@ class NeuralNetworkBuilder(
     }
 }
 
-private operator fun DoubleArray.div(size: Double): DoubleArray {
-    return DoubleArray(this.size) { i -> this[i] / size }
-}

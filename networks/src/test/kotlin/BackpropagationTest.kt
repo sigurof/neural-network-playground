@@ -28,9 +28,9 @@ class BackpropagationTest : FreeSpec({
             )
         val contentToString = buildNetwork.evaluateNetwork(trainingData.first().input).contentToString()
         println("Network evaluated: " + contentToString + ", desired output: " + trainingData.first().output.contentToString())
-        val gradient = buildNetwork.calculateGradient(
-            trainingData
-        )
+        val gradient = neuralNetworkBuilder.calculateGradientOld(buildNetwork, trainingData)
+
+
 
         println("Auto Gradient: " + gradient.contentToString())
 
@@ -73,14 +73,15 @@ class BackpropagationTest : FreeSpec({
 
         // train it
         println(
-            "Trained network: " + neuralNetworkBuilder.train2()
+            "Trained network: " + neuralNetworkBuilder.train(false, neuralNetworkBuilder::calculateGradient)
                 .evaluateNetwork(trainingData.first().input).contentToString()
         )
-
-
     }
 
 
+    "do the two methods of computing the gradient give the same result?" - {
+
+    }
 })
 
 private operator fun DoubleArray.unaryMinus(): DoubleArray {
