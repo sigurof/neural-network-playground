@@ -36,5 +36,4 @@ void main(void){
    );
     fragMatrix = uMatrix * 1 + mockMatrix * 0;
     gl_Position.x /= aspectRatio;
-//     float something = aspectRatio;
 }

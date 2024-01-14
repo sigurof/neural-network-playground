@@ -14,16 +14,7 @@ vec2 elementwiseSigmoid(vec2 v){
 }
 
 void main(void){
-
     vec3 xy1 = vec3(coord2d, 1.0);
     vec2 result = elementwiseSigmoid((fragMatrix * xy1).xy);
-
-//         out_Color = vec4(result.x, 0, 0, 0);
-        out_Color = 0.7*vec4(result.x, 0.0, result.y, 0);
-//     if (result.x > result.y){
-//         out_Color = vec4(result, 0.0, 0);
-//     }else {
-//         out_Color = vec4(result, 0.0, 0);
-//     }
-
+    out_Color = 0.7*vec4(result.x, 0.0, result.y, 0);
 }
