@@ -1,6 +1,5 @@
 package no.sigurof.ml
 
-import kotlin.math.cos
 import kotlinx.serialization.Serializable
 
 
@@ -39,12 +38,6 @@ class NeuralNetworkBuilder(
             listOf(outputLayer)
         ).flatten()
             .zipWithNext { nThis, nNext -> NetworkConnectionInfo(inputs = nThis, outputs = nNext) }
-
-    private val stuff: List<Matrix> = networkConnections.map {
-        randomMatrix(
-            it.matrixRows, it.matrixCols
-        )
-    }
 
     fun train(): NeuralNetwork {
         val weightsDimensions = networkConnections.sumOf { it.weights + it.biases }
