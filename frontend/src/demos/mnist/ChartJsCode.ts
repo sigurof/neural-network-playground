@@ -1,5 +1,5 @@
 import { Chart, ChartConfiguration, ChartData, registerables } from "chart.js";
-import { range } from "../../utils.ts";
+import { range } from "../../common/utils/utils.ts";
 import { useEffect, useRef } from "react";
 // import { ChartConfiguration } from "@types/chart.js";
 

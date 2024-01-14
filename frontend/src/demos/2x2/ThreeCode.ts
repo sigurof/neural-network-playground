@@ -4,9 +4,7 @@ import circlesFragSource from "../../common/shaders/circles/fragment.shader?raw"
 import networkVtxSource from "./shaders/vertex.shader?raw";
 import networkFragSource from "./shaders/fragment.shader?raw";
 
-const SQUARE: number[] = [
-    -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,
-];
+const SQUARE: number[] = [-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0];
 
 function createBillboardMesh(
     aspect: number,

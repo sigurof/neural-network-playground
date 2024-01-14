@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
-import axios from "axios";
-import { startThree, tearDownScene, threeJsInitialized } from "./ThreeCode.ts";
+import { startThree, threeJsInitialized } from "./ThreeCode.ts";
+import { api, InputOutput } from "../../api/api.ts";
 
 export const Input = ({
     name,
@@ -47,41 +47,30 @@ const initialState: Form = {
     bias1: Math.random(),
 };
 
-const circlesInputOutput: { input: number[]; output: number[] }[] = Array.from(
-    { length: 100 },
-    () => {
-        const x = (Math.random() - 0.5) * 2;
-        const y = (Math.random() - 0.5) * 2;
-        const blue = [0.0, 1.0];
-        const red = [1.0, 0.0];
-        return {
-            input: [x, y],
-            output: x + y < 0.5 ? red : blue,
-        };
-    },
-);
+const circlesInputOutput: InputOutput[] = Array.from({ length: 100 }, () => {
+    const x = (Math.random() - 0.5) * 2;
+    const y = (Math.random() - 0.5) * 2;
+    const blue = [0.0, 1.0];
+    const red = [1.0, 0.0];
+    return {
+        input: [x, y],
+        output: x + y < 0.5 ? red : blue,
+    };
+});
 
 async function train(): Promise<Form> {
-    const res = await axios.post(
-        "http://localhost:8080/ml/network",
-        {
-            trainingData: circlesInputOutput,
-            hiddenLayerDimensions: [],
-        },
-        {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        },
-    );
-    let data = res.data.layers;
+    const res = await api.train({
+        trainingData: circlesInputOutput,
+        hiddenLayerDimensions: [],
+    });
+    const data = res.neuralNetwork.connections;
     return {
-        weight00: data[0].data[0][0],
-        weight01: data[0].data[0][1],
-        bias0: data[0].data[0][2],
-        weight10: data[0].data[1][0],
-        weight11: data[0].data[1][1],
-        bias1: data[0].data[1][2],
+        weight00: data[0].matrix.data[0][0],
+        weight01: data[0].matrix.data[0][1],
+        bias0: data[0].matrix.data[0][2],
+        weight10: data[0].matrix.data[1][0],
+        weight11: data[0].matrix.data[1][1],
+        bias1: data[0].matrix.data[1][2],
     };
 }
 
@@ -98,10 +87,7 @@ export const Demo2x2RedBlue = () => {
         controls.current!.hasChanged = true;
     }
 
-    function handleChange(
-        e: ChangeEvent<HTMLInputElement>,
-        name: WeightOrBiasName,
-    ) {
+    function handleChange(e: ChangeEvent<HTMLInputElement>, name: WeightOrBiasName) {
         const value = Number(e.target.value);
         if (!isNaN(value)) {
             const newForm = {
@@ -128,16 +114,10 @@ export const Demo2x2RedBlue = () => {
                     key={`input${name}`}
                     name={name}
                     value={startValues[name as WeightOrBiasName]}
-                    handleChange={(e) =>
-                        handleChange(e, name as WeightOrBiasName)
-                    }
+                    handleChange={(e) => handleChange(e, name as WeightOrBiasName)}
                 />
             ))}
-            <button
-                onClick={() => train().then((form) => handleFormChange(form))}
-            >
-                Train!
-            </button>
+            <button onClick={() => train().then((form) => handleFormChange(form))}>Train!</button>
             <canvas id="canvas"></canvas>
         </>
     );

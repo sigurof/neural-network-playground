@@ -1,5 +1,5 @@
-import { Chart, registerables, ChartConfiguration, ChartData } from "chart.js";
-import { range } from "../../utils.ts";
+import { Chart, ChartConfiguration, ChartData, registerables } from "chart.js";
+import { range } from "../../common/utils/utils.ts";
 // import { ChartConfiguration } from "@types/chart.js";
 
 export let chartInitialized = false;

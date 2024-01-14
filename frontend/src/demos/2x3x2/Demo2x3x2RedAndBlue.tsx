@@ -1,20 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import axios from "axios";
 import { startThree, threeJsInitialized } from "./ThreeCode.ts";
-import { circlesDataSets, TrainingData } from "./data.ts";
+import { circlesDataSets } from "./data.ts";
+import { api, MatrixDto, TrainedNeuralNetworkDto } from "../../api/api.ts";
 
 const trainingData = circlesDataSets.nonLinear.circularRegion;
-export type Matrix = {
-    rows: number;
-    cols: number;
-    data: number[][];
-};
 
 const hiddenLayerDimensions = [3];
-const initialState: Matrix[] = [
+const initialState: MatrixDto[] = [
     {
         rows: 3,
-        cols: 3,
+        columns: 3,
         data: [
             [0.0, 0.0, 0.0],
             [0.0, 0.0, 0.0],
@@ -23,7 +18,7 @@ const initialState: Matrix[] = [
     },
     {
         rows: 2,
-        cols: 4,
+        columns: 4,
         data: [
             [0.0, 0.0, 0.0, 0.0],
             [0.0, 0.0, 0.0, 0.0],
@@ -31,29 +26,11 @@ const initialState: Matrix[] = [
     },
 ];
 
-async function train(
-    trainingData: TrainingData,
-    hiddenLayerDimensions: number[],
-): Promise<unknown> {
-    const res = await axios.post(
-        "http://localhost:8080/ml/network",
-        {
-            trainingData: trainingData,
-            hiddenLayerDimensions: hiddenLayerDimensions,
-        },
-        {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        },
-    );
-    return res.data;
-}
-
-function castToSimpleNetworkLayer(data: unknown): Matrix[] {
+function castToSimpleNetworkLayer(data: TrainedNeuralNetworkDto): MatrixDto[] {
     console.log(data);
     // type safely pick layers property from data:
-    const data2 = (data as { layers: unknown }).layers;
+    // const data2 = (data as { layers: unknown }).layers;
+    const data2 = data.neuralNetwork.connections;
     // throw error if not an array:
     if (!Array.isArray(data2)) {
         throw new Error("data is not an array");
@@ -63,18 +40,19 @@ function castToSimpleNetworkLayer(data: unknown): Matrix[] {
         throw new Error("data is not of length 1");
     }
     // each element of the array ought to be an object with properties rows, cols, data:
-    data2.forEach((element) => {
+    const matrixDtos = data2.map((it) => it.matrix);
+    matrixDtos.forEach((element) => {
         if (
             typeof element !== "object" ||
-            !element.hasOwnProperty("rows") ||
-            !element.hasOwnProperty("columns") ||
-            !element.hasOwnProperty("data")
+            !Object.prototype.hasOwnProperty.call(element, "rows") ||
+            !Object.prototype.hasOwnProperty.call(element, "columns") ||
+            !Object.prototype.hasOwnProperty.call(element, "data")
         ) {
             throw new Error("data element is not an object with properties");
         }
     });
 
-    return data2;
+    return matrixDtos;
 }
 
 const WeightBiasInput = ({
@@ -142,8 +120,8 @@ function InputFieldsForMatrix({
     value,
 }: {
     matrixIndex: number;
-    handleFormChange: (form: Matrix) => void;
-    value: Matrix;
+    handleFormChange: (form: MatrixDto) => void;
+    value: MatrixDto;
 }) {
     console.log(value);
     return (
@@ -172,13 +150,13 @@ function InputFieldsForMatrix({
 }
 
 export const Demo2x3x2RedAndBlue = () => {
-    const [form, setForm] = useState<Matrix[]>(initialState);
+    const [form, setForm] = useState<MatrixDto[]>(initialState);
     const controls = useRef<{
         hasChanged: boolean;
-        formValues: Matrix[];
+        formValues: MatrixDto[];
     } | null>(null);
 
-    function handleFormChange(form: Matrix[]) {
+    function handleFormChange(form: MatrixDto[]) {
         setForm(form);
         controls.current!.formValues = form;
         controls.current!.hasChanged = true;
@@ -201,7 +179,7 @@ export const Demo2x3x2RedAndBlue = () => {
                         key={`matrix${index}`}
                         matrixIndex={index}
                         value={matrix}
-                        handleFormChange={(newMatrix: Matrix) => {
+                        handleFormChange={(newMatrix: MatrixDto) => {
                             const newMatrices = [...form];
                             newMatrices[index] = newMatrix;
                             handleFormChange(newMatrices);
@@ -211,7 +189,10 @@ export const Demo2x3x2RedAndBlue = () => {
             })}
             <button
                 onClick={async () => {
-                    const result = await train(trainingData, hiddenLayerDimensions);
+                    const result: TrainedNeuralNetworkDto = await api.train({
+                        trainingData: trainingData,
+                        hiddenLayerDimensions,
+                    });
                     const formData = castToSimpleNetworkLayer(result);
                     handleFormChange(formData);
                 }}

@@ -7,9 +7,7 @@ import networkVtxSource from "./shaders/network/vertex.shader?raw";
 import networkFragSource from "./shaders/network/fragment.shader?raw";
 import { Matrix } from "./Demo2x3x2RedAndBlue.tsx";
 
-const SQUARE: number[] = [
-    -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,
-];
+const SQUARE: number[] = [-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0];
 
 function createBillboardMesh(
     aspect: number,

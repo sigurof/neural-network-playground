@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from "react";
 
 // Define a type for individual RGB colors
 export type RGBColor = [number, number, number]; // Tuple representing [R, G, B]

@@ -1,26 +1,16 @@
 import { useEffect, useRef, useState } from "react";
-import axios from "axios";
 import { startThree, threeJsInitialized } from "./ThreeCode.ts";
 import { circlesDataSets } from "./data3d.ts";
 import { TrainingData } from "./data.ts";
 import { Slider } from "@mui/material";
 import styled from "styled-components";
 import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
-import { range } from "../../utils.ts";
-
-export type Matrix = {
-    rows: number;
-    cols: number;
-    data: number[][];
-};
+import { range } from "../../common/utils/utils.ts";
+import { api, MatrixDto, TrainedNeuralNetworkDto } from "../../api/api.ts";
 
 const trainingData: TrainingData = circlesDataSets.nonLinear.redGreenBlue;
 const hiddenLayerDimensions = [3, 3];
-const layerDimensions = [
-    trainingData[0].input.length,
-    ...hiddenLayerDimensions,
-    trainingData[0].output.length,
-];
+const layerDimensions = [trainingData[0].input.length, ...hiddenLayerDimensions, trainingData[0].output.length];
 const zipWithNext = (arr: number[]) => {
     const result: { left: number; right: number }[] = [];
     for (let i = 0; i < arr.length - 1; i++) {
@@ -29,60 +19,39 @@ const zipWithNext = (arr: number[]) => {
     return result;
 };
 
-function calculateWeightsAndBiasesDimensions(
-    inputNodes: number,
-    outputNodes: number,
-) {
+function calculateWeightsAndBiasesDimensions(inputNodes: number, outputNodes: number) {
     const numberOfBiases = outputNodes;
     const numberOfWeights = inputNodes * outputNodes;
     return numberOfWeights + numberOfBiases;
 }
 
-const weightsAndBiasesDimensions = zipWithNext(layerDimensions).map(
-    ({ left, right }) => {
-        return {
-            rows: right,
-            cols: left + 1, // +1 for the bias
-        };
-    },
-);
+const weightsAndBiasesDimensions = zipWithNext(layerDimensions).map(({ left, right }) => {
+    return {
+        rows: right,
+        cols: left + 1, // +1 for the bias
+    };
+});
 
-const initialState: Matrix[] = weightsAndBiasesDimensions.map((dimensions) => {
+const initialState: MatrixDto[] = weightsAndBiasesDimensions.map((dimensions) => {
     const { rows, cols } = dimensions;
     const data = range(rows).map(() => range(cols).map(() => 0.0));
     return {
         rows: rows,
-        cols: cols,
+        columns: cols,
         data: data,
     };
 });
 
-async function train(
-    trainingData: TrainingData,
-    hiddenLayerDimensions: number[],
-): Promise<unknown> {
-    const res = await axios.post(
-        "http://localhost:8080/ml/network",
-        {
-            trainingData: trainingData,
-            hiddenLayerDimensions: hiddenLayerDimensions,
-        },
-        {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        },
-    );
-    return res.data;
-}
-
-function castToStats(result: unknown): { step: number; cost: number }[] {
+function castToStats(result: TrainedNeuralNetworkDto): { step: number; cost: number }[] {
     const record: unknown = (result as { record: unknown }).record;
     return record as { step: number; cost: number }[];
 }
 
-function castToSimpleNetworkLayer(data: unknown): Matrix[] {
-    const layers = (data as { layers: unknown }).layers;
+function castToSimpleNetworkLayer(data: TrainedNeuralNetworkDto): MatrixDto[] {
+    // const layers = (data as { layers: unknown }).layers;
+    const layers = data.neuralNetwork.connections.map((connection) => {
+        return connection.matrix;
+    });
 
     // throw error if not an array:
     if (!Array.isArray(layers)) {
@@ -99,6 +68,7 @@ function castToSimpleNetworkLayer(data: unknown): Matrix[] {
 const MyLabel = styled.label`
     grid-column-start: 1;
 `;
+
 const SliderContainer = styled.div`
     display: grid;
     grid-template-columns: 1fr 2fr;
@@ -181,8 +151,8 @@ function InputFieldsForMatrix({
     value,
 }: {
     matrixIndex: number;
-    handleFormChange: (form: Matrix) => void;
-    value: Matrix;
+    handleFormChange: (form: MatrixDto) => void;
+    value: MatrixDto;
 }) {
     return (
         <div>
@@ -224,16 +194,16 @@ const ChartContainer = styled.div`
 `;
 
 export const Demo = () => {
-    const [form, setForm] = useState<Matrix[]>(initialState);
+    const [form, setForm] = useState<MatrixDto[]>(initialState);
     const controls = useRef<{
         hasChanged: boolean;
-        formValues: Matrix[];
+        formValues: MatrixDto[];
     } | null>(null);
     const chartUpdater = useRef<{
         update: (points: { x: number; y: number }[]) => void;
     } | null>(null);
 
-    function handleFormChange(form: Matrix[]) {
+    function handleFormChange(form: MatrixDto[]) {
         setForm(form);
         controls.current!.formValues = form;
         controls.current!.hasChanged = true;
@@ -242,7 +212,7 @@ export const Demo = () => {
     useEffect(() => {
         if (!chartInitialized) {
             chartUpdater.current = {
-                update: startChartJs()!.updateChart
+                update: startChartJs()!.updateChart,
             };
         }
     }, []);
@@ -263,7 +233,7 @@ export const Demo = () => {
                         key={`matrix${index}`}
                         matrixIndex={index}
                         value={matrix}
-                        handleFormChange={(newMatrix: Matrix) => {
+                        handleFormChange={(newMatrix: MatrixDto) => {
                             const newMatrices = [...form];
                             newMatrices[index] = newMatrix;
                             handleFormChange(newMatrices);
@@ -273,11 +243,11 @@ export const Demo = () => {
             })}
             <button
                 onClick={async () => {
-                    const result = await train(
+                    const result: TrainedNeuralNetworkDto = await api.train({
                         trainingData,
                         hiddenLayerDimensions,
-                    );
-                    const formData = castToSimpleNetworkLayer(result);
+                    });
+                    const formData: MatrixDto[] = castToSimpleNetworkLayer(result);
                     const statistics = castToStats(result);
                     chartUpdater.current!.update(
                         statistics.map((stat) => {

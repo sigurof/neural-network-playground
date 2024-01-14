@@ -1,19 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { CircleData, startThree, threeJsInitialized } from "./ThreeCode.ts";
-import { circlesDataSets as circlesDataSets2, MLInputOutput, TrainingData } from "./data.ts";
+import { MLInputOutput } from "./data.ts";
 import { Slider } from "@mui/material";
 import styled from "styled-components";
 import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
-import { range } from "../../utils.ts";
-import ColorGrid, { RGBColor } from "./ColorGrid.tsx";
+import { range } from "../../common/utils/utils.ts";
+import { RGBColor } from "./ColorGrid.tsx";
 import { circlesDataSets } from "./data3d.ts";
-
-export type Matrix = {
-    rows: number;
-    columns: number;
-    data: number[][];
-};
+import { api, MatrixDto, Record, TrainedNeuralNetworkDto } from "../../api/api.ts";
 
 const mlTrainingData: MLInputOutput[] = circlesDataSets.abc.redAndBlue;
 const circleData: CircleData[] = mlTrainingData.map((data) => {
@@ -56,7 +51,7 @@ const weightsAndBiasesDimensions: NetworkConnection[] = zipWithNext(layerDimensi
     };
 });
 
-const initialState: Matrix[] = weightsAndBiasesDimensions.map((dimensions) => {
+const initialState: MatrixDto[] = weightsAndBiasesDimensions.map((dimensions) => {
     const { rows, columns } = dimensions;
     const data = range(rows).map(() => range(columns).map(() => 0.0));
     return {
@@ -66,29 +61,16 @@ const initialState: Matrix[] = weightsAndBiasesDimensions.map((dimensions) => {
     };
 });
 
-async function train(trainingData: TrainingData, hiddenLayerDimensions: number[]): Promise<unknown> {
-    const res = await axios.post(
-        "http://localhost:8080/ml/network",
-        {
-            trainingData: trainingData,
-            hiddenLayerDimensions: hiddenLayerDimensions,
-        },
-        {
-            headers: {
-                "Content-Type": "application/json",
-            },
-        },
-    );
-    return res.data;
-}
-
-function castToStats(result: unknown): { step: number; cost: number }[] {
+function castToStats(result: TrainedNeuralNetworkDto): { step: number; cost: number }[] {
     const record: unknown = (result as { record: unknown }).record;
     return record as { step: number; cost: number }[];
 }
 
-function castToSimpleNetworkLayer(data: unknown): Matrix[] {
-    const layers = (data as { layers: unknown }).layers;
+function castToSimpleNetworkLayer(data: TrainedNeuralNetworkDto): MatrixDto[] {
+    // const layers = (data as { layers: unknown }).layers;
+    const layers = data.neuralNetwork.connections.map((connection) => {
+        return connection.matrix;
+    });
 
     // throw error if not an array:
     if (!Array.isArray(layers)) {
@@ -189,8 +171,8 @@ function InputFieldsForMatrix({
     value,
 }: {
     matrixIndex: number;
-    handleFormChange: (form: Matrix) => void;
-    value: Matrix;
+    handleFormChange: (form: MatrixDto) => void;
+    value: MatrixDto;
 }) {
     return (
         <div>
@@ -237,7 +219,7 @@ function elementwiseSigmoid(numbers: number[]) {
     });
 }
 
-function matrixMultiplication(matrix: Matrix, vector: number[]) {
+function matrixMultiplication(matrix: MatrixDto, vector: number[]) {
     const result: number[] = [];
     for (let row = 0; row < matrix.rows; row++) {
         let sum = 0;
@@ -249,7 +231,7 @@ function matrixMultiplication(matrix: Matrix, vector: number[]) {
     return result;
 }
 
-function evaluateNetwork(row: number, col: number, form: Matrix[]): RGBColor {
+function evaluateNetwork(row: number, col: number, form: MatrixDto[]): RGBColor {
     const activations = [[row, col]];
     let lastActivations = 0;
     for (const matrix of form) {
@@ -264,7 +246,7 @@ function evaluateNetwork(row: number, col: number, form: Matrix[]): RGBColor {
     return [Math.round(activation[0] * 255), 0, Math.round(activation[1] * 255)];
 }
 
-async function askBackendForImage(form: Matrix[]) {
+async function askBackendForImage(form: MatrixDto[]) {
     // Call backend ml/evaluate endpoint with the form variable as the body
     // Receive a png image byte stream
     const response = await axios.post("http://localhost:8080/ml/evaluate", form, {
@@ -296,14 +278,14 @@ const useCharts = () => {
 };
 
 export const Demo = () => {
-    const [form, setForm] = useState<Matrix[]>(initialState);
+    const [form, setForm] = useState<MatrixDto[]>(initialState);
     const threeJsController = useRef<{
-        update: (form: Matrix[]) => void;
+        update: (form: MatrixDto[]) => void;
         tearDown: () => void;
     } | null>(null);
     const chartUpdater = useCharts();
 
-    function handleFormChange(form: Matrix[]) {
+    function handleFormChange(form: MatrixDto[]) {
         setForm(form);
         threeJsController.current!.update(form);
     }
@@ -340,7 +322,7 @@ export const Demo = () => {
                         key={`matrix${index}`}
                         matrixIndex={index}
                         value={matrix}
-                        handleFormChange={(newMatrix: Matrix) => {
+                        handleFormChange={(newMatrix: MatrixDto) => {
                             const newMatrices = [...form];
                             newMatrices[index] = newMatrix;
                             handleFormChange(newMatrices);
@@ -350,9 +332,12 @@ export const Demo = () => {
             })}
             <button
                 onClick={async () => {
-                    const result = await train(mlTrainingData, hiddenLayerDimensions);
-                    const formData = castToSimpleNetworkLayer(result);
-                    const statistics = castToStats(result);
+                    const result: TrainedNeuralNetworkDto = await api.train({
+                        trainingData: mlTrainingData,
+                        hiddenLayerDimensions,
+                    });
+                    const formData: MatrixDto[] = castToSimpleNetworkLayer(result);
+                    const statistics: Record[] = castToStats(result);
                     handleFormChange(formData);
                     chartUpdater.current!.updateChart(
                         statistics.map((stat) => {

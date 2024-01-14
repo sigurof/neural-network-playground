@@ -6,8 +6,8 @@ import styled from "styled-components";
 import { styled as muiStyled } from "@mui/material/styles";
 import { OverrideDialog } from "./OverrideDialog.tsx";
 import { toast } from "react-toastify";
-import { Matrix } from "../Mnist.tsx";
-import { range } from "../../../utils.ts";
+import { NeuralNetwork } from "../../../common/ml/neural-network.ts";
+import { ServerEvent, serverEvents } from "../../../api/api.ts";
 
 function valuetext(value: number) {
     return `${value}°C`;
@@ -40,29 +40,6 @@ const LargeButton = muiStyled(Button)(({ theme }: { theme: any }) => ({
     height: "100px",
     fontSize: "1.2rem",
 }));
-
-const serverEvents = {
-    askSetModel: `no.sigurof.ml.server.web.websockets.ServerEvent.AskSetModel`,
-    update: `no.sigurof.ml.server.web.websockets.ServerEvent.Update`,
-    clientError: `no.sigurof.ml.server.web.websockets.ServerEvent.ClientError`,
-} as const;
-
-type InferedType = typeof serverEvents.askSetModel;
-type AskSetModel = {
-    type: InferedType;
-};
-
-type Update = {
-    type: typeof serverEvents.update;
-    weights: Matrix[];
-};
-
-type ClientError = {
-    type: typeof serverEvents.clientError;
-    message: string;
-};
-
-type ServerEvent = AskSetModel | Update | ClientError;
 
 const clientEvents = {
     continue: `no.sigurof.ml.server.web.websockets.ClientEvent.Continue`,
@@ -105,43 +82,6 @@ function parseHiddenLayers(layers: string) {
         .map((it) => it.trim())
         .filter((it) => it)
         .map((it) => parseInt(it));
-}
-
-function matrixMultiplication(data: number[][], param2: number[]): number[] {
-    const outputLength = data.length;
-    const output = range(outputLength).map(() => 0);
-    for (let iRow = 0; iRow < data.length; iRow++) {
-        let outputRow = 0;
-        for (let iCol = 0; iCol < data[iRow].length; iCol++) {
-            outputRow += param2[iCol] * data[iRow][iCol];
-        }
-    }
-    return output;
-}
-
-function sigmoid(x: number): number {
-    return 1 / (1 + Math.exp(-x));
-}
-
-function elementwiseSigmoid(numbers: number[]): number[] {
-    return numbers.map((it) => sigmoid(it));
-}
-
-function evaluateActivations(weights: Matrix[]): number[][] {
-    const firstActivations = range(weights[0].columns - 1).map(() => 0);
-    const activations = [firstActivations];
-
-    for (let i = 0; i < weights.length; i++) {
-        const layer = weights[i];
-        const activationsOfLastLayer: number[] = activations[i];
-        const arrayProduct = matrixMultiplication(layer.data, [...activationsOfLastLayer, 1]);
-        activations.push(elementwiseSigmoid(arrayProduct));
-    }
-    return activations;
-}
-
-function evaluateCost(_: Matrix[]): number {
-    return 1;
 }
 
 export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: number) => void> }) => {
@@ -285,7 +225,7 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                                 if (data.type === serverEvents.update) {
                                     setAwaitingResponse(false);
                                     setRunning(true);
-                                    onCostUpdate.current?.(evaluateCost(data.weights));
+                                    onCostUpdate.current?.(new NeuralNetwork(data).evaluateCost([]));
                                 }
                                 if (data.type === serverEvents.clientError) {
                                     console.log("Client error: ", data.message);

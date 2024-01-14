@@ -1,6 +1,6 @@
 import { Link, Outlet } from "react-router-dom";
 import "react-toastify/dist/ReactToastify.css";
-import { ErrorPage } from "../ErrorPage.tsx";
+import { ErrorPage } from "./ErrorPage.tsx";
 import Contact from "./Contact.tsx";
 import { Demo2x2RedBlue } from "../demos/2x2/Demo2x2RedBlue.tsx";
 import { Demo2x3x2RedAndBlue } from "../demos/2x3x2/Demo2x3x2RedAndBlue.tsx";

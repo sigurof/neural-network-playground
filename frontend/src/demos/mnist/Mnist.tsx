@@ -31,11 +31,6 @@ const TestingGrounds = () => {
     );
 };
 
-export type Matrix = {
-    rows: number;
-    columns: number;
-    data: number[][];
-};
 
 
 export const Mnist = () => {

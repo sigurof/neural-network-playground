@@ -1,5 +1,5 @@
 import { randomlyDistributedPoints } from "./data.ts";
-import { range } from "../../utils.ts";
+import { range } from "../../common/utils/utils.ts";
 
 const RED_ARRAY = [1, 0, 0];
 const GREEN_ARRAY = [0, 1, 0];

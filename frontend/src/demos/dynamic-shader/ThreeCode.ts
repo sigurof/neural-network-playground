@@ -3,11 +3,9 @@ import circlesVtxSource from "./shaders/circles/vertex.shader?raw";
 import circlesFragSource from "./shaders/circles/fragment.shader?raw";
 import networkVtxSource from "./shaders/network/vertex.shader?raw";
 import networkFragSource from "./shaders/network/fragment.shader?raw";
-import { Matrix, NetworkConnection } from "./Demo.tsx";
+import { MatrixDto, NetworkConnection } from "./Demo.tsx";
 
-const SQUARE: number[] = [
-    -1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0,
-];
+const SQUARE: number[] = [-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0];
 
 export type Color = { r: number; g: number; b: number };
 export type Vec2D = { x: number; y: number };
@@ -61,7 +59,7 @@ function createBillboardMesh(aspect: number, circlesInputOutput: CircleData[]) {
 
 function createBackgroundMesh(
     aspect: number,
-    startValues: Matrix[],
+    startValues: MatrixDto[],
     weightsAndBiasesDimensions: NetworkConnection[],
 ) {
     const geometry = new THREE.BufferGeometry();
@@ -132,7 +130,7 @@ let now,
 let fps = 3;
 const interval = 1000 / fps;
 
-function createLayers(networkLayers: Matrix[]): {
+function createLayers(networkLayers: MatrixDto[]): {
     allWeightsAndBiases: Float32Array;
 } {
     const numbers: number[] = networkLayers.flatMap((matrix) =>
@@ -146,7 +144,7 @@ function createLayers(networkLayers: Matrix[]): {
 export let threeJsInitialized = false;
 
 export function startThree(
-    startValues: Matrix[],
+    startValues: MatrixDto[],
     circlesInputOutput: CircleData[],
     weightsAndBiasesDimensions: NetworkConnection[],
 ) {
@@ -197,7 +195,7 @@ export function startThree(
     const threeJsUUID: string =   Math.random().toString(36).substring(7);
     console.log(`Three.js ${threeJsUUID} initialized`);
 
-    const update = (form: Matrix[]) => {
+    const update = (form: MatrixDto[]) => {
         controls.formValues = form;
         controls.hasChanged = true;
     };
