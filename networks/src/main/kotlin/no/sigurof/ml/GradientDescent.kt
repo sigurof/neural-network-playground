@@ -9,7 +9,7 @@ fun interface Iterationcallback{
 
 fun gradientDescentOld(
     n: Int,
-    costFuncion: (coord: DoubleArray) -> Double,
+    costFuncion: (step: Int, coordinate: DoubleArray) -> Double,
     iterationCallback: Iterationcallback? = null,
 ): DoubleArray {
     val learningRate = 6
@@ -20,11 +20,11 @@ fun gradientDescentOld(
     val d = 0.0003
     var functionValue: Double
     while (derivative.length() > d && steps < 4000) {
-        functionValue = costFuncion.invoke(startCoord)
+        functionValue = costFuncion.invoke(steps, startCoord)
         iterationCallback?.invoke(steps, startCoord, functionValue)
         val newCoord: DoubleArray = DoubleArray(size = startCoord.size)
         for (index in startCoord.indices) {
-            val functionValueIncr = costFuncion.invoke(startCoord.increment(index, delta))
+            val functionValueIncr = costFuncion.invoke(steps, startCoord.increment(index, delta))
             derivative[index] = (functionValueIncr - functionValue) / delta
         }
         for (index in startCoord.indices) {
@@ -33,7 +33,7 @@ fun gradientDescentOld(
         startCoord = newCoord
         steps++;
     }
-    functionValue = costFuncion.invoke(startCoord)
+    functionValue = costFuncion.invoke(steps, startCoord)
     iterationCallback?.invoke(steps, startCoord, functionValue)
     println("steps = $steps")
     return startCoord
