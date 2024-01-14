@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export type InputOutput = { input: number[]; output: number[] };
+export type InputVsOutput = { input: number[]; output: number[] };
 
 export type MatrixDto = {
     rows: number;
@@ -33,7 +33,8 @@ export type AskSetModel = {
 
 export type Update = {
     type: typeof serverEvents.update;
-} & NeuralNetworkDto;
+    neuralNetwork: NeuralNetworkDto;
+};
 
 export type ClientError = {
     type: typeof serverEvents.clientError;
@@ -41,7 +42,6 @@ export type ClientError = {
 };
 
 export type ServerEvent = AskSetModel | Update | ClientError;
-
 
 export type Record = {
     step: number;
@@ -53,27 +53,59 @@ export type TrainedNeuralNetworkDto = {
     record: Record[];
 };
 
-export const api = {
-    train: async ({
+export type ModelDto = {
+    hiddenLayers: number[];
+    sizeDataSet: number;
+    sizeTestSet: number;
+};
+
+export type SessionDto = {
+    id: string;
+    progress: number;
+    result: NeuralNetworkDto;
+    model: ModelDto;
+};
+
+// Rewrite of api object as a class:
+class Api {
+    // constructor takes base url as argument
+    constructor(private baseUrl: string) {}
+
+    async train({
         trainingData,
         hiddenLayerDimensions,
     }: {
-        trainingData: InputOutput[];
+        trainingData: InputVsOutput[];
         hiddenLayerDimensions: number[];
-    }): Promise<TrainedNeuralNetworkDto> => {
-        return axios
-            .post(
-                "http://localhost:8080/ml/network",
-                {
-                    trainingData: trainingData,
-                    hiddenLayerDimensions: hiddenLayerDimensions,
+    }): Promise<TrainedNeuralNetworkDto> {
+        const promise = await axios.post(
+            `${this.baseUrl}/ml/network`,
+            {
+                trainingData: trainingData,
+                hiddenLayerDimensions: hiddenLayerDimensions,
+            },
+            {
+                headers: {
+                    "Content-Type": "application/json",
                 },
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                },
-            )
-            .then((response) => response.data);
-    },
-};
+            },
+        );
+        return promise.data;
+    }
+
+    async getSessions(): Promise<SessionDto[]> {
+        const res = await axios.get(`${this.baseUrl}/ml/sessions`);
+        return await res.data;
+    }
+
+    async getTestData(numTest: number) {
+        const res = await axios.get(`${this.baseUrl}/ml/mnist/testData`, {
+            params: {
+                size: numTest,
+            },
+        });
+        return res.data;
+    }
+}
+
+export const api = new Api("http://localhost:8080");

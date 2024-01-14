@@ -16,35 +16,44 @@ import java.awt.Color
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import kotlinx.serialization.Serializable
+import no.sigurof.ml.datasets.MNIST
+import no.sigurof.ml.neuralnetwork.InputVsOutput
 import no.sigurof.ml.neuralnetwork.NeuralNetwork
 import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
 import no.sigurof.ml.neuralnetwork.NeuralNetworkConnectionSpec
-import no.sigurof.ml.server.IterativeServerClientSession
 import no.sigurof.ml.server.Model
+import no.sigurof.ml.server.NeuralNetworkServerClientSession
+import no.sigurof.ml.server.nnSessions
 import no.sigurof.ml.server.plugins.configureSerialization
-import no.sigurof.ml.server.sessions
+import no.sigurof.ml.server.web.common.NeuralNetworkDto
 import no.sigurof.ml.server.web.common.toDto
 
 @Serializable
 class SessionDto(
     var id: String,
     var progress: Int,
-    var result: String,
+    var result: NeuralNetworkDto,
     var model: Model? = null,
 )
 
-fun Map.Entry<String, IterativeServerClientSession>.toDto() =
+fun Map.Entry<String, NeuralNetworkServerClientSession>.toDto() =
     SessionDto(
         id = this.key,
         progress = this.value.progress,
-        result = this.value.result,
+        result = this.value.result.toDto(),
         model = this.value.model
     )
 
 fun Route.restRoutes() {
+    get("/ml/mnist/testData") {
+        val numberOfTestSamples = call.request.queryParameters["size"]?.toInt() ?: 10000
+        val inputsOutputs: List<InputVsOutput> = MNIST.inputsVsOutputs(numberOfTestSamples)
+        call.respond(inputsOutputs)
+    }
+
     get("/ml/sessions") {
-        val message: List<SessionDto> = sessions.map { it.toDto() }
-        call.respond(message)
+        val sessions: List<SessionDto> = nnSessions.map { it.toDto() }
+        call.respond(sessions)
     }
 
     post("/ml/network") {

@@ -1,28 +1,29 @@
 import { range } from "../utils/utils.ts";
-import { MatrixDto, NeuralNetworkDto } from "../../api/api.ts";
-
-function matrixMultiplication(data: number[][], param2: number[]): number[] {
-    const outputLength = data.length;
-    const output = range(outputLength).map(() => 0);
-    for (let iRow = 0; iRow < data.length; iRow++) {
-        let outputRow = 0;
-        for (let iCol = 0; iCol < data[iRow].length; iCol++) {
-            outputRow += param2[iCol] * data[iRow][iCol];
-        }
-    }
-    return output;
-}
-
-function sigmoid(x: number): number {
-    return 1 / (1 + Math.exp(-x));
-}
+import { ConnectionDto, InputVsOutput, MatrixDto, NeuralNetworkDto } from "../../api/api.ts";
+import { matrixMultiplication, matrixOf } from "../linalg/linalg.ts";
+import { sigmoid } from "../maths/maths.ts";
+import { Matrix3 } from "three";
 
 function elementwiseSigmoid(numbers: number[]): number[] {
     return numbers.map((it) => sigmoid(it));
 }
 
+export function connectionOfData(matrix: number[][]): ConnectionDto {
+    return connectionOfMatrix(matrixOf(matrix));
+}
+
+export function connectionOfMatrix(matrix: MatrixDto): ConnectionDto {
+    return {
+        matrix,
+        weights: matrix.columns - 1,
+        biases: matrix.rows,
+        inputs: matrix.columns,
+        outputs: matrix.rows,
+    };
+}
+
 export class NeuralNetwork {
-    constructor(public d: NeuralNetworkDto) {}
+    constructor(private d: NeuralNetworkDto) {}
 
     evaluateActivations(inputActivations: number[]): number[][] {
         const activations = [inputActivations];
@@ -35,12 +36,16 @@ export class NeuralNetwork {
         return activations;
     }
 
-    evaluateCost(testingData: { in: number[]; out: number[] }[]) {
+    evaluateOutput(inputActivations: number[]): number[] {
+        return this.evaluateActivations(inputActivations)[this.d.connections.length];
+    }
+
+    evaluateCost(testingData: InputVsOutput[]) {
         return testingData
             .map((testExample) => {
-                const activations = this.evaluateActivations(testExample.in);
+                const activations = this.evaluateActivations(testExample.input);
                 const outputActivations = activations[activations.length - 1];
-                const squaredError = testExample.out.map((expectedOutput, i) => {
+                const squaredError = testExample.output.map((expectedOutput, i) => {
                     const actualOutput = outputActivations[i];
                     return (expectedOutput - actualOutput) ** 2;
                 });
@@ -49,4 +54,3 @@ export class NeuralNetwork {
             .reduce((a, b) => a + b, 0);
     }
 }
-

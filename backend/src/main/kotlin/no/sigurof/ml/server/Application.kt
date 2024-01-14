@@ -33,6 +33,7 @@ internal val nnSessions = ConcurrentHashMap<String, NeuralNetworkServerClientSes
 class Model(
     val hiddenLayers: List<Int>,
     val sizeDataSet: Int,
+    val sizeTestSet: Int,
 )
 
 data class IterativeServerClientSession(

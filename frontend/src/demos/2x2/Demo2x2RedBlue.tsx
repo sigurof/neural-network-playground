@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useEffect, useRef, useState } from "react";
 import { startThree, threeJsInitialized } from "./ThreeCode.ts";
-import { api, InputOutput } from "../../api/api.ts";
+import { api, InputVsOutput } from "../../api/api.ts";
 
 export const Input = ({
     name,
@@ -47,7 +47,7 @@ const initialState: Form = {
     bias1: Math.random(),
 };
 
-const circlesInputOutput: InputOutput[] = Array.from({ length: 100 }, () => {
+const circlesInputOutput: InputVsOutput[] = Array.from({ length: 100 }, () => {
     const x = (Math.random() - 0.5) * 2;
     const y = (Math.random() - 0.5) * 2;
     const blue = [0.0, 1.0];

@@ -12,6 +12,17 @@ object MNIST {
     private const val TRAINING_LABELS_FILE = "./datasets/MNIST/unzipped/train-labels-idx1-ubyte"
     private const val TRAINING_IMAGES_FILE = "./datasets/MNIST/unzipped/train-images-idx3-ubyte"
     var trainingData: TrainingData? = null
+//    var currentSize: Int = 0
+
+    fun inputsVsOutputs(size: Int): List<InputVsOutput> {
+        val currentSize = trainingData?.labeledImages?.size ?: 0
+        if (currentSize < size) {
+            loadTrainingData(size)
+        }
+        return trainingData!!.labeledImages
+            .take(size)
+            .map { it.toInputVsOutput() }
+    }
 
     class TrainingLabels(
         val magicNumber: Int,
@@ -147,6 +158,7 @@ object MNIST {
     )
 
     fun loadTrainingData(n: Int) {
+        println("Loading $n samples of training data...")
         this.trainingData = parseTrainingData(n)
     }
 

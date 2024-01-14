@@ -2,7 +2,9 @@ import styled from "styled-components";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import LinePlot from "./LinePlot.tsx";
 import { SectionBox } from "./Common.tsx";
-import { CreateModel } from "./create-model/CreateModel.tsx";
+import { CreateAndTrainModel } from "./create-model/CreateAndTrainModel.tsx";
+import { NeuralNetwork } from "../../common/ml/neural-network.ts";
+import { InputVsOutput, Update } from "../../api/api.ts";
 
 const DemoBed = styled.div`
     min-height: 100vh;
@@ -31,28 +33,43 @@ const TestingGrounds = () => {
     );
 };
 
+// new NeuralNetwork().evaluateCost([])
 
-
+type OnNeuralNetworkUpdate = (update: Update) => void;
 export const Mnist = () => {
-    const [cost, setCost] = useState<number[]>([]);
-    const onCostUpdate = useCallback(
-        (newCost: number) => {
-            setCost([...cost, newCost]);
+    // const [cost, setCost] = useState<number[]>([]);
+    const [lines, setLines] = useState<Record<string, number[]>>({
+        cost: [],
+    });
+    const [testData, setTestData] = useState<InputVsOutput[]>([]);
+    const handleUpdate = (name: string, newValue: number) => {
+        setLines({
+            ...lines,
+            [name]: [...lines[name], newValue],
+        });
+    };
+    const onCostUpdate: OnNeuralNetworkUpdate = useCallback(
+        (update: Update) => {
+            const cost = new NeuralNetwork(update.neuralNetwork).evaluateCost(testData);
+            handleUpdate("cost", cost);
         },
-        [cost],
+        [lines],
     );
-    const onCostUpdateRef: MutableRefObject<(cost: number) => void> = useRef(onCostUpdate);
+    const onCostUpdateRef: MutableRefObject<OnNeuralNetworkUpdate> = useRef(onCostUpdate);
 
     useEffect(() => {
         onCostUpdateRef.current = onCostUpdate;
     }, [onCostUpdate]);
-    useEffect(() => {
-        console.log("Rerendering Demo");
-    }, []);
     return (
         <DemoBed>
-            <CreateModel onCostUpdate={onCostUpdateRef} />
-            <CostGraph cost={cost} />
+            <CreateAndTrainModel
+                onTestDataLoaded={(inputsVsOutputs) => {
+                    console.log(`Loaded test data with length ${inputsVsOutputs.length}`);
+                    setTestData(inputsVsOutputs);
+                }}
+                onNeuralNetworkUpdate={onCostUpdateRef}
+            />
+            <CostGraph cost={lines.cost} />
             <TestingGrounds />
             <div></div>
         </DemoBed>

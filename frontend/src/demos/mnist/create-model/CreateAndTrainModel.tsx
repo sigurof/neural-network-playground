@@ -7,7 +7,7 @@ import { styled as muiStyled } from "@mui/material/styles";
 import { OverrideDialog } from "./OverrideDialog.tsx";
 import { toast } from "react-toastify";
 import { NeuralNetwork } from "../../../common/ml/neural-network.ts";
-import { ServerEvent, serverEvents } from "../../../api/api.ts";
+import { api, InputVsOutput, ServerEvent, serverEvents, SessionDto, Update } from "../../../api/api.ts";
 
 function valuetext(value: number) {
     return `${value}°C`;
@@ -46,6 +46,17 @@ const clientEvents = {
     newModel: `no.sigurof.ml.server.web.websockets.ClientEvent.NewModel`,
 };
 
+type NewModel = {
+    type?: string;
+    sessionId: string;
+    override: boolean;
+    model: {
+        hiddenLayers: number[];
+        sizeDataSet: number;
+        sizeTestSet: number;
+    };
+};
+
 const createEvent = {
     continue(sessionId: string): string {
         return JSON.stringify({
@@ -53,26 +64,13 @@ const createEvent = {
             sessionId,
         });
     },
-    newModel(sessionId: string, hiddenLayers: number[], sizeDataSet: number, override: boolean) {
-        const payload = {
+    newModel(data: NewModel) {
+        const payload: NewModel = {
             type: clientEvents.newModel,
-            sessionId,
-            override,
-            model: {
-                hiddenLayers,
-                sizeDataSet,
-            },
+            ...data,
         };
         return JSON.stringify(payload);
     },
-};
-
-type SessionDto = {
-    id: string;
-    progress: number;
-    result: string;
-    isActive: boolean;
-    model?: never;
 };
 
 function parseHiddenLayers(layers: string) {
@@ -84,8 +82,16 @@ function parseHiddenLayers(layers: string) {
         .map((it) => parseInt(it));
 }
 
-export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: number) => void> }) => {
+export type OnTestDataLoaded = (testData: InputVsOutput[]) => void;
+export const CreateAndTrainModel = ({
+    onNeuralNetworkUpdate,
+    onTestDataLoaded,
+}: {
+    onTestDataLoaded: OnTestDataLoaded;
+    onNeuralNetworkUpdate: RefObject<(update: Update) => void>;
+}) => {
     const [layers, setLayers] = useState<string>("");
+    const [numTest, setNumTest] = useState<number>(1000);
     const [numTraining, setNumTraining] = useState<number>(50000);
     const [running, setRunning] = useState(false);
     const [askToOverride, setAskToOverride] = useState(false);
@@ -95,10 +101,9 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
     const [sessions, setSessions] = useState<SessionDto[]>([]);
     const [awaitingResponse, setAwaitingResponse] = useState(false);
     useEffect(() => {
-        axios.get("http://localhost:8080/ml/sessions").then((res) => {
-            setSessions(res.data);
-        });
+        api.getSessions().then((res) => setSessions(res));
     }, []);
+
     useEffect(() => {
         const webs = webSocket.current;
         return () => {
@@ -133,7 +138,17 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                     closeModal();
                     const hiddenLayers = parseHiddenLayers(layers);
                     console.log(hiddenLayers);
-                    webSocket.current?.send(createEvent.newModel(sessionId, hiddenLayers, numTraining, true));
+                    webSocket.current?.send(
+                        createEvent.newModel({
+                            sessionId,
+                            model: {
+                                hiddenLayers,
+                                sizeDataSet: numTraining,
+                                sizeTestSet: numTest,
+                            },
+                            override: true,
+                        }),
+                    );
                 }}
             />
 
@@ -199,10 +214,28 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                         valueLabelDisplay="auto"
                     />
                 </Grid>
+                <Grid>
+                    <Typography id="continuous-slider" gutterBottom>
+                        Test data
+                    </Typography>
+                    <Slider
+                        max={10000}
+                        min={100}
+                        step={100}
+                        value={numTest}
+                        onChange={(_, v) => {
+                            setNumTest(v as number);
+                        }}
+                        aria-label="Always visible"
+                        getAriaValueText={valuetext}
+                        valueLabelDisplay="auto"
+                    />
+                </Grid>
             </GridContainer>
             <ButtonContainer>
                 <LargeButton
                     onClick={() => {
+                        api.getTestData(numTest).then((testData) => onTestDataLoaded(testData));
                         if (running) {
                             webSocket.current?.close();
                             setRunning(false);
@@ -212,7 +245,15 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                             socket.addEventListener("open", () => {
                                 console.log("opened");
                                 socket.send(
-                                    createEvent.newModel(sessionId, parseHiddenLayers(layers), numTraining, false),
+                                    createEvent.newModel({
+                                        sessionId,
+                                        model: {
+                                            hiddenLayers: parseHiddenLayers(layers),
+                                            sizeDataSet: numTraining,
+                                            sizeTestSet: numTest,
+                                        },
+                                        override: false,
+                                    }),
                                 );
                             });
                             socket.addEventListener("message", (event) => {
@@ -225,7 +266,7 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                                 if (data.type === serverEvents.update) {
                                     setAwaitingResponse(false);
                                     setRunning(true);
-                                    onCostUpdate.current?.(new NeuralNetwork(data).evaluateCost([]));
+                                    onNeuralNetworkUpdate.current?.(data);
                                 }
                                 if (data.type === serverEvents.clientError) {
                                     console.log("Client error: ", data.message);

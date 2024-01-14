@@ -86,11 +86,13 @@ private suspend fun WebSocketServerSession.sendServerEvent(data: ServerEvent) {
 private suspend fun WebSocketServerSession.receiveNeuralNetworkUpdates(session: NeuralNetworkServerClientSession) {
     var i = 0
     NeuralNetworkBuilder(
-        trainingData = MNIST.trainingData!!.labeledImages.map { it.toInputVsOutput() },
+        trainingData = MNIST.inputsVsOutputs(session.model.sizeDataSet),
         hiddenLayerDimensions = session.model.hiddenLayers
     ).trainBackProp().collect { neuralNetwork ->
         i++
-        sendServerEvent(ServerEvent.Update("Update $i of 60", neuralNetwork.toDto()))
+        val message = "Update $i of 60"
+        println("Sending '$message'")
+        sendServerEvent(ServerEvent.Update(message, neuralNetwork.toDto()))
     }
 }
 
