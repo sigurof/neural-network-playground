@@ -4,6 +4,7 @@ import DisplayManager
 import DisplayManager.Companion.HEIGHT
 import DisplayManager.Companion.WIDTH
 import no.sigurof.ml.InputVsOutput
+import no.sigurof.ml.Layer
 import no.sigurof.ml.NeuralNetworkBuilder
 import no.sigurof.ml.XY
 import no.sigurof.ml.visualization.Network2x2Shader
@@ -18,7 +19,6 @@ import no.sigurof.plotting.RED
 import no.sigurof.plotting.ShaderManager
 import no.sigurof.plotting.SphereShader
 import no.sigurof.plotting.engine.CoreEngine.setBackgroundColor
-import no.sigurof.randomlyDistributedPoints
 import org.joml.Vector2f
 import org.joml.Vector4f
 
@@ -64,8 +64,8 @@ fun plot2x3x2Network() {
         trainingData = realTrainingData,
         hiddenLayerDimensions = listOf(3),
     ).train()
-    val firstWeights = network.weights[0]
-    val secondWeights = network.weights[1]
+    val firstWeights: Layer = network.weightsAndBiases.layers[0]
+    val secondWeights: Layer = network.weightsAndBiases.layers[1]
     println("Cost is ${network.calculateCostFunction(realTrainingData)}")
     DisplayManager.FPS = 60
     DisplayManager.withWindowOpen { window ->
@@ -76,8 +76,8 @@ fun plot2x3x2Network() {
             setBackgroundColor(Vector4f(0.3f, 0.3f, 0.3f, 1f))
             shader.use()
             shader.loadAspectRatio(WIDTH.toFloat() / HEIGHT.toFloat())
-            shader.loadFirstWeights(firstWeights)
-            shader.loadSecondWeights(secondWeights)
+            shader.loadFirstWeights(firstWeights.matrix)
+            shader.loadSecondWeights(secondWeights.matrix)
             billboard.activate()
             billboard.render()
             circleShader.use()
@@ -131,7 +131,7 @@ fun plot2x2Network() {
             setBackgroundColor(Vector4f(0.3f, 0.3f, 0.3f, 1f))
             shader.use()
             shader.loadAspectRatio(WIDTH.toFloat() / HEIGHT.toFloat())
-            shader.loadMatrix(network.weights[0])
+            shader.loadMatrix(network.weightsAndBiases.layers[0].matrix)
             billboard.activate()
             billboard.render()
             circleShader.use()
