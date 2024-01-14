@@ -2,6 +2,7 @@
 
 uniform vec2 center;
 uniform float radius;
+uniform float aspectRatio;
 
 out vec2 coord2d;
 
@@ -28,4 +29,5 @@ vec2 whichVertex(){
 void main(void){
     coord2d = whichVertex();
     gl_Position = vec4(center + radius * coord2d, 0.0, 1.0);
+    gl_Position.x /= aspectRatio;
 }
