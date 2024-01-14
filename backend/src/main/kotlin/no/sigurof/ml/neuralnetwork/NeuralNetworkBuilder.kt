@@ -4,7 +4,7 @@ import kotlin.random.Random
 import kotlinx.serialization.Serializable
 import no.sigurof.ml.neuralnetwork.backpropagation.BackPropagation
 import no.sigurof.ml.neuralnetwork.backpropagation.GradientDescent
-import no.sigurof.ml.neuralnetwork.backpropagation.NaiveDerivative
+import no.sigurof.ml.neuralnetwork.backpropagation.increment
 import no.sigurof.ml.routes.NeuralNetworkParams
 
 @Serializable
@@ -68,7 +68,26 @@ class NeuralNetworkBuilder(
         train(recordCostFunction = recordCostFunction, gradientFunction = BackPropagation::calculateGradient)
 
     fun trainOld(recordCostFunction: Boolean = false): TrainingResult =
-        train(recordCostFunction, NaiveDerivative::calculateGradientInefficiently)
+        train(
+            recordCostFunction,
+            ::calculateSimpleGradient
+        )
+
+    fun calculateSimpleGradient(
+        weightsAndBiases: WeightsAndBiases,
+        trainingDataChunk: List<InputVsOutput>,
+    ): DoubleArray {
+        val weightsDimensions = weightsAndBiases.weightsLayers.sumOf { it.matrix.data.size }
+        val functionValue = weightsAndBiases.calculateCostFunction(trainingDataChunk)
+        val delta = 0.0001
+        val derivative = DoubleArray(weightsDimensions) { 10.0 }
+        for (index in 0 until weightsDimensions) {
+            val pointIncr = weightsAndBiases.data.increment(index, delta)
+            val functionValueIncr = weightsAndBiases(pointIncr).calculateCostFunction(trainingDataChunk)
+            derivative[index] = (functionValueIncr - functionValue) / delta
+        }
+        return derivative
+    }
 
     private fun train(
         recordCostFunction: Boolean = false,
@@ -98,7 +117,7 @@ class NeuralNetworkBuilder(
         )
     }
 
-    private fun weightsAndBiases(data: DoubleArray) =
+    fun weightsAndBiases(data: DoubleArray) =
         WeightsAndBiases(
             data = data,
             networkConnectionsIn = networkConnections

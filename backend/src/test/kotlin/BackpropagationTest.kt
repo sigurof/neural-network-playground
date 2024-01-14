@@ -32,7 +32,7 @@ class BackpropagationTest : FreeSpec({
                         )
                     )
             val inefficientGradient =
-                neuralNetworkBuilder.calculateGradientInefficiently(buildNetwork, trainingData)
+                neuralNetworkBuilder.calculateSimpleGradient(buildNetwork, trainingData)
             val backpropagationGradient =
                 BackPropagation.calculateGradient(buildNetwork, trainingData)
             val inefficientGradientFormatted = inefficientGradient.map { format("%.15f", it) }
@@ -62,7 +62,7 @@ class BackpropagationTest : FreeSpec({
                 }
 
             val inefficientGradient =
-                neuralNetworkBuilder.calculateGradientInefficiently(buildNetwork, trainingData)
+                neuralNetworkBuilder.calculateSimpleGradient(buildNetwork, trainingData)
             val backpropagationGradient =
                 BackPropagation.calculateGradient(buildNetwork, trainingData)
             val inefficientGradientFormatted = inefficientGradient.map { format("%.15f", it) }
