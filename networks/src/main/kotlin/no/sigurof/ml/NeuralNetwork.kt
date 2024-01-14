@@ -1,7 +1,6 @@
 package no.sigurof.ml
 
 import kotlin.math.exp
-import kotlin.math.pow
 
 fun elementwiseSigmoid(vector: DoubleArray): DoubleArray {
     return DoubleArray(vector.size) { index -> 1.0 / (1.0 + exp(-vector[index])) }
@@ -61,13 +60,13 @@ class WeightsAndBiases(
         fun populate(networkConnectionsIn: List<NetworkConnectionInfo>, initMethod: (Int) -> Double): WeightsAndBiases {
             return WeightsAndBiases(
                 networkConnectionsIn = networkConnectionsIn,
-                initMethod =    initMethod
+                initMethod = initMethod
             )
         }
     }
 
 
-    constructor(networkConnectionsIn: List<NetworkConnectionInfo>, initMethod: (Int)-> Double) : this(
+    constructor(networkConnectionsIn: List<NetworkConnectionInfo>, initMethod: (Int) -> Double) : this(
         networkConnectionsIn = networkConnectionsIn,
         data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod)
     )
@@ -78,8 +77,7 @@ class WeightsAndBiases(
 class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
 
 
-
-    fun calculateGradient(inputVsOutputs: InputVsOutput): DoubleArray {
+    fun calculateGradientBackpropagation(inputVsOutputs: InputVsOutput): DoubleArray {
         val gradient = DoubleArray(weightsAndBiases.data.size) { _ -> 0.0 }
         val activations: List<DoubleArray> = evaluateActivations(inputVsOutputs.input)
 
@@ -156,7 +154,6 @@ class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
                 for (i in gradientContributionsOfPreviousLayers.indices) {
                     gradientContributionsOfPreviousLayers[i] *= (sigmoidPrime * weight)
                 }
-
             }
 //            for (nextActivationIndex in 0 until weightsAndBiases.weightsLayers[weightsIndex - 1].outputs) {
 //                gradientContributionsOfPreviousLayers.mutablyAddElementwise(
@@ -182,7 +179,8 @@ class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
             val outputVector: DoubleArray = evaluateNetwork(trainingDataPoint.input)
             var error = 0.0
             for (i in outputVector.indices) {
-                error += (outputVector[i] - trainingDataPoint.output[i]).pow(2)
+                val diff = outputVector[i] - trainingDataPoint.output[i]
+                error += diff * diff
             }
             error
         }.average()
