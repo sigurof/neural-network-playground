@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { CircleData, startThree, threeJsInitialized } from "./ThreeCode.ts";
 import {
@@ -10,10 +10,11 @@ import { Slider } from "@mui/material";
 import styled from "styled-components";
 import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
 import { range } from "../../utils.ts";
+import ColorGrid, { RGBColor } from "./ColorGrid.tsx";
 
 export type Matrix = {
     rows: number;
-    cols: number;
+    columns: number;
     data: number[][];
 };
 
@@ -32,7 +33,7 @@ const circleData: CircleData[] = mlTrainingData.map((data) => {
         },
     };
 });
-const hiddenLayerDimensions = [3, 3, 3];
+const hiddenLayerDimensions: number[] = [4, 4];
 const layerDimensions = [
     mlTrainingData[0].input.length,
     ...hiddenLayerDimensions,
@@ -57,24 +58,23 @@ function calculateWeightsAndBiasesDimensions(
 
 export type NetworkConnection = {
     rows: number;
-    cols: number;
-
-}
-const weightsAndBiasesDimensions: NetworkConnection[] = zipWithNext(layerDimensions).map(
-    ({ left, right }) => {
-        return {
-            rows: right,
-            cols: left + 1, // +1 for the bias
-        };
-    },
-);
+    columns: number;
+};
+const weightsAndBiasesDimensions: NetworkConnection[] = zipWithNext(
+    layerDimensions,
+).map(({ left, right }) => {
+    return {
+        rows: right,
+        columns: left + 1, // +1 for the bias
+    };
+});
 
 const initialState: Matrix[] = weightsAndBiasesDimensions.map((dimensions) => {
-    const { rows, cols } = dimensions;
-    const data = range(rows).map(() => range(cols).map(() => 0.0));
+    const { rows, columns } = dimensions;
+    const data = range(rows).map(() => range(columns).map(() => 0.0));
     return {
         rows: rows,
-        cols: cols,
+        columns: columns,
         data: data,
     };
 });
@@ -245,10 +245,65 @@ const ChartContainer = styled.div`
     grid-column-start: 2;
 `;
 
+function elementwiseSigmoid(numbers: number[]) {
+    return numbers.map((number) => {
+        return 1 / (1 + Math.exp(-number));
+    });
+}
+
+function matrixMultiplication(matrix: Matrix, vector: number[]) {
+    const result: number[] = [];
+    for (let row = 0; row < matrix.rows; row++) {
+        let sum = 0;
+        for (let col = 0; col < matrix.columns; col++) {
+            sum += matrix.data[row][col] * vector[col];
+        }
+        result.push(sum);
+    }
+    return result;
+}
+
+function evaluateNetwork(row: number, col: number, form: Matrix[]): RGBColor {
+    const activations = [[row, col]];
+    let lastActivations = 0;
+    for (const matrix of form) {
+        activations.push(
+            elementwiseSigmoid(
+                matrixMultiplication(matrix, activations[lastActivations]),
+            ),
+        );
+        lastActivations++;
+    }
+    const activation = activations[activations.length - 1];
+    // check that activation has length 2
+    if (activation.length !== 2) {
+        throw new Error("activation does not have length 2");
+    }
+    return [
+        Math.round(activation[0] * 255),
+        0,
+        Math.round(activation[1] * 255),
+    ];
+}
+
+async function askBackendForImage(form: Matrix[]) {
+    // Call backend ml/evaluate endpoint with the form variable as the body
+    // Receive a png image byte stream
+    const response = await axios.post(
+        "http://localhost:8080/ml/evaluate",
+        form,
+        {
+            responseType: "blob",
+        },
+    );
+    return URL.createObjectURL(response.data);
+}
+
 export const Demo = () => {
     const [form, setForm] = useState<Matrix[]>(initialState);
     const threeJsController = useRef<{
         update: (form: Matrix[]) => void;
+        tearDown: () => void;
     } | null>(null);
     const chartUpdater = useRef<{
         update: (points: { x: number; y: number }[]) => void;
@@ -258,25 +313,45 @@ export const Demo = () => {
         setForm(form);
         threeJsController.current!.update(form);
     }
+    const newRandom = Math.random();
+    console.log(`The new random is ${newRandom}`)
 
+    // a useeffect calling threeJsController.tearDown on unmount
     useEffect(() => {
-        if (!chartInitialized) {
-            chartUpdater.current = {
-                update: startChartJs()!.updateChart,
-            };
-        }
+        return () => {
+            console.log(`tearing down ${newRandom}}`);
+            threeJsController.current?.tearDown();
+        };
     }, []);
+
+    // useEffect(() => {
+    //     if (!chartInitialized) {
+    //         chartUpdater.current = {
+    //             update: startChartJs()!.updateChart,
+    //         };
+    //     }
+    // }, []);
     useEffect(() => {
         if (!threeJsInitialized) {
-            const result = startThree(form, circleData, weightsAndBiasesDimensions);
+            const result = startThree(
+                form,
+                circleData,
+                weightsAndBiasesDimensions,
+            );
             if (result) {
                 threeJsController.current = {
                     update: result.update,
+                    tearDown: result.tearDown,
                 };
             }
         }
     }, []);
+    const numPixelsX = 10;
+    const numPixelsY = 10;
 
+    // const colors = useMemo(, [form]);
+
+    const [imageSrc, setImageSrc] = useState("");
     return (
         <>
             {form.map((matrix, index) => {
@@ -314,10 +389,20 @@ export const Demo = () => {
             <GraphicsContainer>
                 <ThreeJsContainer id="threeCanvas" />
 
-                <ChartContainer>
-                    <canvas id="chartCanvas" />
-                </ChartContainer>
+                {/*<ChartContainer>*/}
+                {/*    <canvas id="chartCanvas" />*/}
+                {/*</ChartContainer>*/}
             </GraphicsContainer>
+            <button
+                onClick={async () => {
+                    const url = await askBackendForImage(form);
+                    setImageSrc(url);
+                }}
+            >
+                Reset
+            </button>
+            Show a 500 x 500 img
+            {imageSrc && <img src={imageSrc} width={500} height={500} />}
         </>
     );
 };

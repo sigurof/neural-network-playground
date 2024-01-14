@@ -77,7 +77,7 @@ function createBackgroundMesh(
     const numberOfMatrices = weightsAndBiasesDimensions.length;
     const matrixDimensions = weightsAndBiasesDimensions.flatMap((it) => [
         it.rows,
-        it.cols,
+        it.columns,
     ]);
     console.log(`All weights and biases: ${allWeightsAndBiases.length}`)
     console.log(`Matrix dimensions: ${matrixDimensions.length}`)
@@ -198,7 +198,17 @@ export function startThree(
         controls.hasChanged = true;
     };
 
+    const tearDown = ()=>{
+        billboardMesh.geometry.dispose();
+        billboardMesh.material.dispose();
+        backgroundMesh.geometry.dispose();
+        backgroundMesh.material.dispose();
+        scene.remove(billboardMesh);
+        scene.remove(backgroundMesh);
+    }
+
     return {
         update,
+        tearDown,
     };
 }
