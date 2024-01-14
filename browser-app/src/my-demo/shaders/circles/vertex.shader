@@ -1,4 +1,3 @@
-# version 300 es
 
 uniform float aspect;
 uniform float radius;
