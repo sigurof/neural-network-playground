@@ -3,8 +3,10 @@
 uniform vec2 center;
 uniform float radius;
 uniform float aspectRatio;
+uniform vec3 color;
 
 out vec2 coord2d;
+out vec3 fragColor;
 
 
 vec2 whichVertex(){
@@ -30,4 +32,5 @@ void main(void){
     coord2d = whichVertex();
     gl_Position = vec4(center + radius * coord2d, 0.0, 1.0);
     gl_Position.x /= aspectRatio;
+    fragColor = color;
 }
