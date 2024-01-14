@@ -34,14 +34,9 @@ fun Route.machineLearningRouting() {
         val firstLayer = params.trainingData.first().input.size
         val lastLayer = params.trainingData.first().output.size
         val neuralNetwork: NeuralNetwork = NeuralNetworkBuilder(
-            layers = listOf(
-                listOf(firstLayer),
-                params.hiddenLayerDimensions,
-                listOf(lastLayer)
-            ).flatten()
-        ).train(
-            trainingData = params.trainingData
-        )
+            trainingData = params.trainingData,
+            hiddenLayerDimensions = params.hiddenLayerDimensions
+        ).train()
         val weights: List<MatrixDto> = neuralNetwork.weights.map { it.toMatrixDto() }
         call.respond(weights)
     }
