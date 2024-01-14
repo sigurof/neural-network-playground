@@ -5,6 +5,7 @@ import { circlesDataSets } from "./data3d.ts";
 import { TrainingData } from "./data.ts";
 import { Slider } from "@mui/material";
 import styled from "styled-components";
+import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
 
 export type Matrix = {
     rows: number;
@@ -79,12 +80,14 @@ async function train(
 }
 
 function castToSimpleNetworkLayer(data: unknown): Matrix[] {
+    const data2 = (data as { layers: unknown }).layers;
+
     // throw error if not an array:
-    if (!Array.isArray(data)) {
+    if (!Array.isArray(data2)) {
         throw new Error("data is not an array");
     }
     // throw error if the array is empty:
-    if (data.length < 1) {
+    if (data2.length < 1) {
         throw new Error("data is not of length 1");
     }
     // each element of the array ought to be an object with properties rows, cols, data:
@@ -99,16 +102,16 @@ function castToSimpleNetworkLayer(data: unknown): Matrix[] {
     //     }
     // });
 
-    return data;
+    return data2;
 }
 
 const MyLabel = styled.label`
     grid-column-start: 1;
-`
+`;
 const SliderContainer = styled.div`
     display: grid;
     grid-template-columns: 1fr 2fr;
-`
+`;
 
 const WeightBiasInput = ({
     type,
@@ -116,14 +119,14 @@ const WeightBiasInput = ({
     value,
     handleChange,
 }: {
-    type: "weight" | "bias"
+    type: "weight" | "bias";
     name: string;
     value: number;
     handleChange: (value: number) => void;
 }) => {
     return (
         <SliderContainer>
-            <MyLabel htmlFor={"input"+name}>{`${type}`}</MyLabel>
+            <MyLabel htmlFor={"input" + name}>{`${type}`}</MyLabel>
             <Slider
                 id={"input" + name}
                 value={value}
@@ -148,7 +151,7 @@ const MatrixRowWrapper = styled.div`
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     column-gap: 1rem;
-`
+`;
 
 const MatrixRowInput = ({
     name,
@@ -214,6 +217,19 @@ function InputFieldsForMatrix({
         </div>
     );
 }
+const GraphicsContainer = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1rem;
+`;
+
+const ThreeJsContainer = styled.canvas`
+    grid-column-start: 1;
+`;
+
+const ChartContainer = styled.div`
+    grid-column-start: 2;
+`;
 
 export const Demo2x4x3RedGreenBlue = () => {
     const [form, setForm] = useState<Matrix[]>(initialState);
@@ -228,6 +244,11 @@ export const Demo2x4x3RedGreenBlue = () => {
         controls.current!.hasChanged = true;
     }
 
+    useEffect(() => {
+        if (!chartInitialized) {
+            startChartJs();
+        }
+    }, []);
     useEffect(() => {
         if (!threeJsInitialized) {
             const result = startThree(form, trainingData);
@@ -265,7 +286,13 @@ export const Demo2x4x3RedGreenBlue = () => {
             >
                 Train!
             </button>
-            <canvas id="canvas"></canvas>
+            <GraphicsContainer>
+                <ThreeJsContainer id="threeCanvas" />
+
+                <ChartContainer >
+                    <canvas id="chartCanvas" />
+                </ChartContainer>
+            </GraphicsContainer>
         </>
     );
 };

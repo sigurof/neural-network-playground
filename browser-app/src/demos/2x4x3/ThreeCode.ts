@@ -94,17 +94,16 @@ function createBackgroundMesh(aspect: number, startValues: Matrix[]) {
 
 function createScene() {
     const elementById: HTMLCanvasElement | null = document.getElementById(
-        "canvas",
+        "threeCanvas",
     ) as HTMLCanvasElement | null;
+    console.log(elementById);
     if (!elementById) {
         console.warn("No canvas element found");
         return;
     }
     const scene = new THREE.Scene();
-    const width = 800;
-    const height = 600;
-    // const width = window.innerWidth;
-    // const height = window.innerHeight;
+    const width = 400;
+    const height = 400;
     const aspect = width / height;
     const camera = new THREE.OrthographicCamera(0, 1, 1, -1, 0.1, 100);
     const renderer = new THREE.WebGLRenderer({
@@ -112,7 +111,6 @@ function createScene() {
         antialias: true,
     });
     renderer.setSize(width, height);
-    // two triangles of a square
     return { scene, renderer, aspect, camera };
 }
 
@@ -127,7 +125,6 @@ function createLayers(networkLayers: Matrix[]): {
     secondWeights: THREE.Matrix4;
     thirdWeights: THREE.Matrix4;
 } {
-    // Populating all fields of the 3x3 matrix
     const firstWeights = new THREE.Matrix3(
         networkLayers[0].data[0][0],
         networkLayers[0].data[0][1],
