@@ -110,8 +110,9 @@ class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
         val sigmoidPrime = activation * (1 - activation) // this is the derivative of the sigmoid function
         val directDependenciesGradient = DoubleArray(weightsAndBiases.data.size) { _ -> 0.0 }
 
-        val ownMatrixStartIndex = weightsAndBiases.weightsLayers[weightsIndex].startIndex
-        val cols = weightsAndBiases.weightsLayers[weightsIndex].matrix.cols
+        val weightsLayer = weightsAndBiases.weightsLayers[weightsIndex]
+        val ownMatrixStartIndex = weightsLayer.startIndex
+        val cols = weightsLayer.matrix.cols
         val ownMatrixRowStartIndex = ownMatrixStartIndex + activationIndex * cols
         val biasIndex = ownMatrixRowStartIndex + cols - 1
 
@@ -129,8 +130,13 @@ class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
         // Also, stop recursing if we are at the first layer
         val gradientContributionsOfPreviousLayers = DoubleArray(weightsAndBiases.data.size) { _ -> 0.0 }
 
+        // TODO I'm pretty sure this cuts off correctly, since it works for the 2x2 case. However, something might be off with the arguments.
         if (weightsIndex > 0) {
-            for (nextActivationIndex in 0 until weightsAndBiases.weightsLayers[weightsIndex - 1].outputs) {
+
+            for (col in ownMatrixRowStartIndex..<biasIndex) {
+                val nextActivationIndex = col - ownMatrixRowStartIndex
+                // TODO Clean up this usage of the weight.
+                val weight = weightsAndBiases.data[col]
                 gradientContributionsOfPreviousLayers.mutablyAddElementwise(
                     calcGradientOfActivation(
                         weightsIndex = weightsIndex - 1,
@@ -139,7 +145,25 @@ class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
                         activations = activations.dropLast(1)
                     )
                 )
+                for (i in gradientContributionsOfPreviousLayers.indices) {
+                    gradientContributionsOfPreviousLayers[i] *= (sigmoidPrime * weight)
+                }
+
             }
+//            for (nextActivationIndex in 0 until weightsAndBiases.weightsLayers[weightsIndex - 1].outputs) {
+//                gradientContributionsOfPreviousLayers.mutablyAddElementwise(
+//                    // TODO Move the multiplication of w_ji^L to the outside of this call
+//                     calcGradientOfActivation(
+//                        weightsIndex = weightsIndex - 1,
+//                        activationIndex = nextActivationIndex,
+//                        activation = activations.last()[nextActivationIndex],
+//                        activations = activations.dropLast(1)
+//                    )
+//                )
+//                for (i in gradientContributionsOfPreviousLayers.indices) {
+//                    gradientContributionsOfPreviousLayers[i] *= sigmoidPrime;
+//                }
+//            }
         }
 
         return directDependenciesGradient.mutablyAddElementwise(gradientContributionsOfPreviousLayers)
