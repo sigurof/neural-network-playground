@@ -7,7 +7,6 @@ import fragSource from "./shaders/fragment.shader?raw";
 export type ProgramInfo = {
     uniformLocations: {
         projectionMatrix: WebGLUniformLocation;
-        // modelViewMatrix: WebGLUniformLocation;
         aspect: WebGLUniformLocation;
     };
     attribLocations: { vertexPosition: number };
@@ -15,12 +14,6 @@ export type ProgramInfo = {
 };
 
 export async function myDemo() {
-    // const vtxSource: string = await fetch(vertexShaderUrl).then((response) =>
-    //   response.text(),
-    // );
-    // const fragSource: string = await fetch(fragShaderUrl).then((response) =>
-    //   response.text(),
-    // );
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
     const gl: WebGL2RenderingContext = canvas.getContext("webgl2")!!;
     if (!gl) {
@@ -34,9 +27,6 @@ export async function myDemo() {
     console.log(`The vertex source code is ${vtxSource}`);
 
     const shaderProgram = initShaderProgram(gl, vtxSource, fragSource);
-    // Collect all the info needed to use the shader program.
-    // Look up which attribute our shader program is using
-    // for aVertexPosition and look up uniform locations.
     const programInfo: ProgramInfo = {
         program: shaderProgram,
         attribLocations: {
@@ -51,17 +41,9 @@ export async function myDemo() {
                 shaderProgram,
                 "uProjectionMatrix",
             )!!,
-            // modelViewMatrix: gl.getUniformLocation(
-            //   shaderProgram,
-            //   "uModelViewMatrix",
-            // )!!,
         },
     };
 
-    // Here's where we call the routine that builds all the
-    // objects we'll be drawing.
     const buffers: { position: WebGLBuffer } = initBuffers(gl);
-
-    // Draw the scene
     drawScene(gl, programInfo, buffers);
 }
