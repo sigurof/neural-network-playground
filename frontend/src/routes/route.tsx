@@ -6,12 +6,12 @@ import { Demo2x2RedBlue } from "../demos/2x2/Demo2x2RedBlue.tsx";
 import { Demo2x3x2RedAndBlue } from "../demos/2x3x2/Demo2x3x2RedAndBlue.tsx";
 import React from "react";
 import { Demo as Demo4Layers } from "../demos/2x3x3x3/Demo.tsx";
-import {Demo as DemoDynamicShader} from "../demos/dynamic-shader/Demo.tsx";
+import { Demo as DemoDynamicShader } from "../demos/dynamic-shader/Demo.tsx";
 
 const path22 = "/ml/demos/22";
 const path232 = `/ml/demos/232`;
 const path4Layers = "/ml/demos/2333";
-const pathDynamicShader = "/ml/demos/dynamic-demo"
+const pathDynamicShader = "/ml/demos/dynamic-demo";
 export const routes = [
     {
         path: "/",
@@ -42,6 +42,7 @@ export const routes = [
                 element: <DemoDynamicShader />,
                 errorElement: <ErrorPage />,
             },
+            { path: "MNIST", element: <div> MNIST </div>, errorElement: <ErrorPage /> },
         ],
     },
 ];
@@ -57,9 +58,7 @@ export default function Root() {
                                 <Link to="/">Home</Link>
                             </li>
                             <li>
-                                <Link to={`/contacts/2`}>
-                                    React Router Demo
-                                </Link>
+                                <Link to={`/contacts/2`}>React Router Demo</Link>
                             </li>
                             <li>
                                 <Link to={path22}>2x2 Red/Blue Demo</Link>
@@ -68,14 +67,13 @@ export default function Root() {
                                 <Link to={path232}>2x3x2 Red/Blue Demo</Link>
                             </li>
                             <li>
-                                <Link to={path4Layers}>
-                                    2x3x3x3 Red/Green/Blue Demo
-                                </Link>
+                                <Link to={path4Layers}>2x3x3x3 Red/Green/Blue Demo</Link>
                             </li>
                             <li>
-                                <Link to={pathDynamicShader}>
-                                    Dynamic 2x3x2 Red/Blue Demo
-                                </Link>
+                                <Link to={pathDynamicShader}>Dynamic 2x3x2 Red/Blue Demo</Link>
+                            </li>
+                            <li>
+                                <Link to="/MNIST">MNIST</Link>
                             </li>
                         </ul>
                     </nav>
