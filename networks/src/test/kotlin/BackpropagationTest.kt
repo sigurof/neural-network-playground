@@ -73,9 +73,9 @@ class BackpropagationTest : FreeSpec({
             }
             println("Ratio between gradients (should be 1.0 +- an error): $gradientsRatio")
 
-            gradientsRatio.shouldMatchEach({
+            gradientsRatio.forEach {
                 it shouldBe (1.0 plusOrMinus 1e-1)
-            })
+            }
         }
 
     }
