@@ -1,6 +1,10 @@
 package no.sigurof.ml.neuralnetwork
 
+import kotlin.math.sin
 import kotlin.random.Random
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.Serializable
 import no.sigurof.ml.neuralnetwork.backpropagation.BackPropagation
 import no.sigurof.ml.neuralnetwork.backpropagation.GradientDescent
@@ -143,3 +147,14 @@ class NeuralNetworkBuilder(
         return weightsAndBiases(costFunctionMin)
     }
 }
+
+fun trainNetworkMock(startI: Int): Flow<Pair<Int, Double>> =
+    flow {
+        var i = startI
+        while (true) {
+            val sinT = sin(i.toDouble() / 5.0)
+            emit(i to sinT)
+            delay(300)
+            i++
+        }
+    }

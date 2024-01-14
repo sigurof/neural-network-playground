@@ -1,4 +1,4 @@
-import { Ref, RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { Button, CircularProgress, MenuItem, Select, Slider, TextField, Typography } from "@mui/material";
 import { SectionBox } from "../Common.tsx";
@@ -54,27 +54,29 @@ const clientEvents = {
     newModel: `${CLIENT_EVENT_BASE}.NewModel`,
 };
 
-function continueEvent(sessionId: string): string {
-    return JSON.stringify({
-        type: clientEvents.continue,
-        sessionId,
-    });
-}
-
-function newModelEvent(sessionId: string, hiddenLayers: number[], sizeDataSet: number, override: boolean) {
-    const payload = {
-        type: clientEvents.newModel,
-        hiddenLayers,
-        sizeDataSet,
-        sessionId,
-        override,
-    };
-    return JSON.stringify(payload);
-}
+const createEvent = {
+    continue(sessionId: string): string {
+        return JSON.stringify({
+            type: clientEvents.continue,
+            sessionId,
+        });
+    },
+    newModel(sessionId: string, hiddenLayers: number[], sizeDataSet: number, override: boolean) {
+        const payload = {
+            type: clientEvents.newModel,
+            sessionId,
+            override,
+            model: {
+                hiddenLayers,
+                sizeDataSet,
+            },
+        };
+        return JSON.stringify(payload);
+    },
+};
 
 type SessionDto = {
     id: string;
-    awaitingUserResponse: boolean;
     progress: number;
     result: string;
     isActive: boolean;
@@ -133,13 +135,13 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                 }}
                 onContinue={() => {
                     closeModal();
-                    webSocket.current?.send(continueEvent(sessionId));
+                    webSocket.current?.send(createEvent.continue(sessionId));
                 }}
                 onOverride={() => {
                     closeModal();
                     const hiddenLayers = parseHiddenLayers(layers);
                     console.log(hiddenLayers);
-                    webSocket.current?.send(newModelEvent(sessionId, hiddenLayers, numTraining, true));
+                    webSocket.current?.send(createEvent.newModel(sessionId, hiddenLayers, numTraining, true));
                 }}
             />
 
@@ -217,7 +219,9 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                             const socket = new WebSocket("ws://localhost:8080/ml/network");
                             socket.addEventListener("open", () => {
                                 console.log("opened");
-                                socket.send(newModelEvent(sessionId, parseHiddenLayers(layers), numTraining, false));
+                                socket.send(
+                                    createEvent.newModel(sessionId, parseHiddenLayers(layers), numTraining, false),
+                                );
                             });
                             socket.addEventListener("message", (event) => {
                                 const data = JSON.parse(event.data);

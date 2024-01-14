@@ -1,6 +1,7 @@
 package no.sigurof.ml.server.web.websockets
 
 import kotlinx.serialization.Serializable
+import no.sigurof.ml.server.Model
 
 @Serializable
 internal sealed class ServerEvent {
@@ -36,8 +37,7 @@ internal sealed class ClientEvent {
     data class NewModel(
         override val sessionId: String,
         val override: Boolean = false,
-        val hiddenLayers: List<Int>,
-        val sizeDataSet: Int,
+        val model: Model,
     ) :
         ClientEvent() {
         init {

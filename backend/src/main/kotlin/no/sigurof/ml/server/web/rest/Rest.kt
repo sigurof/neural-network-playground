@@ -28,20 +28,16 @@ import no.sigurof.ml.utils.Matrix
 @Serializable
 class SessionDto(
     var id: String,
-    var awaitingUserResponse: Boolean = false,
     var progress: Int,
     var result: String,
-    var isActive: Boolean = true,
     var model: Model? = null,
 )
 
 fun Map.Entry<String, Session>.toResponse() =
     SessionDto(
         id = this.key,
-        awaitingUserResponse = this.value.awaitingUserResponse,
         progress = this.value.progress,
         result = this.value.result,
-        isActive = this.value.isActive,
         model = this.value.model
     )
 

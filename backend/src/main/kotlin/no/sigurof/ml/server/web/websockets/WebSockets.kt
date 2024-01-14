@@ -12,15 +12,11 @@ import io.ktor.server.websocket.webSocket
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readText
 import java.time.Duration
-import kotlin.math.sin
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
-import no.sigurof.ml.server.Model
+import no.sigurof.ml.neuralnetwork.trainNetworkMock
 import no.sigurof.ml.server.Session
 import no.sigurof.ml.server.sessions
 
@@ -78,25 +74,28 @@ private suspend fun WebSocketServerSession.sendServerEvent(data: ServerEvent) {
 }
 
 private suspend fun WebSocketServerSession.handleContinueWithModel(event: ClientEvent.Continue) {
-    println("Continuation event received.")
-    expensiveCalculationFlow(event)
-        .collect { update ->
-            println("Sending update $update")
-            sendServerEvent(update)
+    val state = sessions[event.sessionId] ?: error("Session ${event.sessionId} not found")
+    trainNetworkMock(startI = state.progress)
+        .collect { (index, value) ->
+            state.progress = index
+            println("Sending update $index")
+            sendServerEvent(ServerEvent.Update("Update $index of 60", value))
         }
 }
 
 private suspend fun WebSocketServerSession.handleNewModel(event: ClientEvent.NewModel) {
-    println("Handling new model event")
+    println("New model: $event")
     val session = sessions[event.sessionId]
     if (session?.model == null || event.override) {
         // if model is new or override is true, set model and train
-        println("Setting new model")
-        sessions[event.sessionId] = Session(false, 0, "", true, Model())
-        expensiveCalculationFlow(event)
-            .collect { update ->
-                println("Sending update $update")
-                sendServerEvent(update)
+        sessions[event.sessionId] =
+            Session(progress = 0, result = "", model = event.model)
+        val state = sessions[event.sessionId] ?: error("Session ${event.sessionId} not found")
+        trainNetworkMock(startI = state.progress)
+            .collect { (index, value) ->
+                state.progress = index
+                println("Sending update $index")
+                sendServerEvent(ServerEvent.Update("Update $index of 60", value))
             }
     } else {
         // ... if sessionId collides, ask user to confirm override
@@ -121,26 +120,11 @@ internal val webSocketsSerializersModule =
 
 val json = Json { serializersModule = webSocketsSerializersModule }
 
-private fun expensiveCalculationFlow(event: ClientEvent): Flow<ServerEvent> =
-    flow {
-        val state = sessions.getOrPut(event.sessionId) { Session(false, 0, "", true, Model()) }
-        for (i in state.progress..6000) {
-            val update = "Update $i of 60"
-            state.progress = i
-            state.result = update
-            val sinT = sin(i.toDouble() / 5.0)
-            emit(ServerEvent.Update(update, sinT))
-            delay(300)
-        }
-        emit(ServerEvent.Update("Calculation Result", 7.0))
-        state.result = "Calculation Result"
-    }
-
 private fun onClientDisconnected(sessionId: String?) {
     println("Session $sessionId disconnected")
-    if (sessionId != null) {
-        sessions[sessionId]?.let { state ->
-            state.isActive = false
-        }
-    }
+//    if (sessionId != null) {
+//        sessions[sessionId]?.let { state ->
+//            state.isActive = false
+//        }
+//    }
 }

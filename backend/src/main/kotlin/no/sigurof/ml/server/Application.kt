@@ -24,15 +24,16 @@ fun startKtorServer() {
         .start(wait = true)
 }
 
-val sessions = ConcurrentHashMap<String, Session>()
+internal val sessions = ConcurrentHashMap<String, Session>()
 
 @Serializable
-class Model
+class Model(
+    val hiddenLayers: List<Int>,
+    val sizeDataSet: Int,
+)
 
 data class Session(
-    var awaitingUserResponse: Boolean = false,
     var progress: Int,
     var result: String,
-    var isActive: Boolean = true,
     var model: Model,
 )
