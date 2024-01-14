@@ -1,6 +1,11 @@
-package org.example
+package no.sigurof.ml
 
-class NeuralNetworkBuilder(  layers: List<Int>
+import no.sigurof.no.sigurof.ml.PosVsColor
+import no.sigurof.ml.gradientDescent
+
+
+class NeuralNetworkBuilder(
+    layers: List<Int>,
 ) {
 
 

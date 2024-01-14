@@ -2,9 +2,9 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.throwable.shouldHaveMessage
-import org.example.Matrix
-import org.example.matrixOfRows
-import org.example.matrixRow
+import no.sigurof.ml.Matrix
+import no.sigurof.ml.matrixOfRows
+import no.sigurof.ml.matrixRow
 
 
 class LinearAlgebraTest : FreeSpec({

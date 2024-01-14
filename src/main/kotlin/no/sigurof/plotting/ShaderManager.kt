@@ -1,4 +1,4 @@
-package org.example
+package no.sigurof.plotting
 
 import java.nio.FloatBuffer
 import org.joml.Matrix4f

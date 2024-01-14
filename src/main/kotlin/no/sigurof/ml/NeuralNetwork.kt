@@ -1,15 +1,16 @@
-package org.example
+package no.sigurof.ml
 
 import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.math.sqrt
+import no.sigurof.no.sigurof.ml.PosVsColor
 
-fun elementwiseSigmoid(vector: Array1): Array1 {
-    return Array1(vector.size) { index -> 1.0 / (1.0 + exp(-vector[index])) }
+fun elementwiseSigmoid(vector: DoubleArray): DoubleArray {
+    return DoubleArray(vector.size) { index -> 1.0 / (1.0 + exp(-vector[index])) }
 }
 
-private fun Array1.concat(i: Int): Array1 {
-    return Array1(this.size + i) { if (it < this.size) this[it] else 1.0 }
+private fun DoubleArray.concat(i: Int): DoubleArray {
+    return DoubleArray(this.size + i) { if (it < this.size) this[it] else 1.0 }
 }
 
 class NeuralNetwork(private val weights: List<Matrix>) {
@@ -36,12 +37,12 @@ class NeuralNetwork(private val weights: List<Matrix>) {
 
 
     fun evaluate(x: Double, y: Double): Map<String, Double> {
-        val activations: MutableList<Array1> = mutableListOf(
-            Array1(2) { if (it == 0) x else y }
+        val activations: MutableList<DoubleArray> = mutableListOf(
+            DoubleArray(2) { if (it == 0) x else y }
         )
         for (i in weights.indices) {
             val weightArray = weights[i]
-            val arrayProduct: Array1 = weightArray * activations[i].concat(1)
+            val arrayProduct: DoubleArray = weightArray * activations[i].concat(1)
             activations.add(elementwiseSigmoid(arrayProduct).concat(1))
         }
         return mapOf(

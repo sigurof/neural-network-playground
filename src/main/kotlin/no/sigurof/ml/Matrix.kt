@@ -1,4 +1,7 @@
-package org.example
+package no.sigurof.ml
+
+
+private typealias Array1 = DoubleArray
 
 class Matrix(val rows: Int, val data: DoubleArray) {
     init {

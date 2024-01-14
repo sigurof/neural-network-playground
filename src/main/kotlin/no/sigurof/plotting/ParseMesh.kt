@@ -1,4 +1,4 @@
-package org.example
+package no.sigurof.plotting
 
 import org.joml.Vector2f
 import org.joml.Vector3f

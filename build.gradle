@@ -5,7 +5,7 @@ plugins {
 project.ext.lwjglVersion = "3.3.1"
 project.ext.lwjglNatives = "natives-macos-arm64"
 project.ext.jomlVersion = "1.9.19"
-group = 'org.example'
+group = 'no.sigurof'
 version = '1.0-SNAPSHOT'
 
 repositories {
@@ -19,7 +19,6 @@ dependencies {
     testImplementation 'io.kotest:kotest-assertions-core-jvm:5.8.0'
 
 
-    // jwjgl
     implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
 
     implementation "org.lwjgl:lwjgl"

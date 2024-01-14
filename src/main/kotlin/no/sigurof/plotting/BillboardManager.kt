@@ -1,4 +1,7 @@
-package org.example
+package no.sigurof.no.sigurof.plotting
+
+import no.sigurof.plotting.BillboardResource
+import no.sigurof.plotting.Loader
 
 
 object BillboardManager {
