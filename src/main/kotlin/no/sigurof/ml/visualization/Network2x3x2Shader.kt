@@ -1,4 +1,4 @@
-package no.sigurof.no.sigurof.ml.visualization
+package no.sigurof.ml.visualization
 
 import no.sigurof.ml.Matrix
 import no.sigurof.plotting.Shader

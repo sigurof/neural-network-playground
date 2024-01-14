@@ -3,7 +3,7 @@ package no.sigurof.ml
 import kotlin.math.exp
 import kotlin.math.pow
 import kotlin.math.sqrt
-import no.sigurof.no.sigurof.ml.PosVsColor
+import no.sigurof.ml.PosVsColor
 
 fun elementwiseSigmoid(vector: DoubleArray): DoubleArray {
     return DoubleArray(vector.size) { index -> 1.0 / (1.0 + exp(-vector[index])) }

@@ -1,7 +1,7 @@
 package no.sigurof.plotting
 
-import no.sigurof.no.sigurof.plotting.BillboardManager
-import no.sigurof.no.sigurof.plotting.SphereShader
+import no.sigurof.plotting.BillboardManager
+import no.sigurof.plotting.SphereShader
 import org.joml.Vector2f
 import org.joml.Vector4f
 import org.lwjgl.opengl.GL20

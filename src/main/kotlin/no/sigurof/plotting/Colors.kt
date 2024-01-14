@@ -1,4 +1,4 @@
-package no.sigurof.no.sigurof.plotting
+package no.sigurof.plotting
 
 import org.joml.Vector3f
 

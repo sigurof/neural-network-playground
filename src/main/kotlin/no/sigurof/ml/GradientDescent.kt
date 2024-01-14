@@ -1,34 +1,7 @@
 package no.sigurof.ml
 
-import kotlin.math.absoluteValue
 import kotlin.math.sqrt
 
-
-data class Vector(
-    val data: DoubleArray,
-) {
-    fun length(): Double {
-        var sum = 0.0
-        for (i in data.indices) {
-            sum += data[i] * data[i]
-        }
-        return sqrt(sum)
-    }
-
-
-    operator fun get(index: Int): Double {
-        return data[index]
-    }
-
-    fun increment(index: Int, delta: Double): Vector {
-        return Vector(data.copyOf().apply { this[index] += delta })
-    }
-
-    operator fun set(index: Int, value: Double) {
-        data[index] = value
-    }
-
-}
 
 fun gradientDescent(n: Int, costFuncion: (coord: DoubleArray) -> Double): DoubleArray {
     val learningRate = 3
@@ -41,7 +14,7 @@ fun gradientDescent(n: Int, costFuncion: (coord: DoubleArray) -> Double): Double
     while (derivative.length() > d) {
         functionValue = costFuncion.invoke(startCoord)
 //        println("Step $steps, derivative = ${derivative.length()}, cost = $functionValue")
-        println("steps = $steps, coord: ${derivative.length()}, cost = $functionValue")
+        println("step = $steps, cost = $functionValue")
         val newCoord: DoubleArray = startCoord.copyOf()
         for (index in startCoord.indices) {
             val functionValueIncr = costFuncion.invoke(startCoord.increment(index, delta))
@@ -67,53 +40,15 @@ private fun DoubleArray.length(): Double {
     return sqrt(sum)
 }
 
+typealias XY = Pair<Double, Double>
 
-data class XY(
-    var x: Double = 0.0,
-    var y: Double = 0.0,
-) {
-    fun length(): Double {
-        return sqrt(x * x + y * y)
+private fun Pair<Double, Double>.length(): Double = sqrt(first * first + second * second)
+val Pair<Double, Double>.x: Double
+    get() {
+        return first
     }
-}
 
-// gradient descent using array to hold coordinates
-
-
-fun gradientDescent2D(function: (xy: XY) -> Double): XY {
-    val alpha = 0.1;
-    val xy = XY(x = 0.4, y = 0.4)
-    val derivative = XY(10.0, 10.0)
-    val delta = 0.001
-    var steps = 0
-    while (derivative.length() > 0.001) {
-        val value = function.invoke(xy)
-        val valueIncrX = function.invoke(XY(xy.x + delta, xy.y))
-        val valueIncrY = function.invoke(XY(xy.x, xy.y + delta))
-        derivative.x = (valueIncrX - value) / delta
-        derivative.y = (valueIncrY - value) / delta
-        xy.x -= alpha * derivative.x
-        xy.y -= alpha * derivative.y
-        steps++;
+val Pair<Double, Double>.y: Double
+    get() {
+        return second
     }
-    println("steps = $steps")
-    return xy
-}
-
-
-fun gradientDescent1D(function: (x: Double) -> Double): Double {
-    val alpha = 0.1;
-    var newX = 0.4;
-    var derivative = 10.0
-    val delta = 0.001
-    var steps = 0
-    while (derivative.absoluteValue > 0.001) {
-        val value = function.invoke(newX)
-        val value2 = function.invoke(newX + delta)
-        derivative = (value2 - value) / delta
-        newX -= alpha * derivative
-        steps++;
-    }
-    println("steps = $steps")
-    return newX
-}

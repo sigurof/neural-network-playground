@@ -1,4 +1,4 @@
-package no.sigurof.no.sigurof.ml
+package no.sigurof.ml
 
 import java.awt.Color
 import java.awt.image.BufferedImage
@@ -6,6 +6,8 @@ import java.io.File
 import javax.imageio.ImageIO
 import no.sigurof.ml.NeuralNetworkBuilder
 import no.sigurof.ml.XY
+import no.sigurof.ml.x
+import no.sigurof.ml.y
 
 open class Data<Value, Label>(
     val value: Value,

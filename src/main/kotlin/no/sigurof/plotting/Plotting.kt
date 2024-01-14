@@ -1,6 +1,6 @@
-package no.sigurof.no.sigurof.plotting
+package no.sigurof.plotting
 
-import no.sigurof.no.sigurof.plotting.engine.CoreEngine
+import no.sigurof.plotting.engine.CoreEngine
 import org.joml.Vector2f
 import org.joml.Vector3f
 import org.joml.Vector4f

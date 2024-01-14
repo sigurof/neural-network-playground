@@ -1,4 +1,4 @@
-package no.sigurof.no.sigurof.plotting
+package no.sigurof.plotting
 
 import no.sigurof.plotting.BillboardResource
 import no.sigurof.plotting.Loader
