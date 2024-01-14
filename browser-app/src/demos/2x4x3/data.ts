@@ -1,9 +1,13 @@
-type CircleData = {
+type CircleData2D = {
     position: { x: number; y: number };
     color: "red" | "blue";
 };
+type CircleData3D = {
+    position: { x: number; y: number; z: number };
+    color: "red" | "green" | "blue";
+};
 
-const randomlyDistributedPoints = (numberOfCircles: number) =>
+export const randomlyDistributedPoints = (numberOfCircles: number) =>
     [...Array(numberOfCircles)].map((_) => ({
         x: (Math.random() - 0.5) * 2,
         y: (Math.random() - 0.5) * 2,
@@ -21,7 +25,7 @@ type ColorPicker = (x: number, y: number) => "red" | "blue";
 const randomlyDistributedPointsSeparatedBy = (
     number: number,
     colorPicker: ColorPicker,
-): CircleData[] => {
+): CircleData2D[] => {
     return randomlyDistributedPoints(number).map((point) => ({
         position: point,
         color: colorPicker(point.x, point.y),
@@ -32,7 +36,7 @@ const BLUE_ARRAY = [0.0, 1.0];
 const RED_ARRAY = [1.0, 0.0];
 type TrainingPoint = { input: number[]; output: number[] };
 export type TrainingData = TrainingPoint[];
-const toTrainingData = (circleData: CircleData) => ({
+const toTrainingData = (circleData: CircleData2D) => ({
     input: [circleData.position.x, circleData.position.y],
     output: circleData.color === "red" ? RED_ARRAY : BLUE_ARRAY,
 });
