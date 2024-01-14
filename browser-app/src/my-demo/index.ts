@@ -1,17 +1,10 @@
 import { initShaderProgram } from "./webgl-demo.ts";
 import { drawScene } from "./draw-scene.ts";
 import { initBuffers } from "./init-buffers.ts";
-import vtxSource from "./shaders/vertex.shader?raw";
-import fragSource from "./shaders/fragment.shader?raw";
-
-export type ProgramInfo = {
-    uniformLocations: {
-        projectionMatrix: WebGLUniformLocation;
-        aspect: WebGLUniformLocation;
-    };
-    attribLocations: { vertexPosition: number };
-    program: WebGLProgram;
-};
+import vtxSource from "./shaders/network/vertex.shader?raw";
+import fragSource from "./shaders/network/fragment.shader?raw";
+import circlesVtxSource from "./shaders/circles/vertex.shader?raw";
+import circlesFragSource from "./shaders/circles/fragment.shader?raw";
 
 export async function myDemo() {
     const canvas = document.querySelector("#canvas") as HTMLCanvasElement;
@@ -26,24 +19,49 @@ export async function myDemo() {
 
     console.log(`The vertex source code is ${vtxSource}`);
 
-    const shaderProgram = initShaderProgram(gl, vtxSource, fragSource);
-    const programInfo: ProgramInfo = {
-        program: shaderProgram,
+    const networkShader = initShaderProgram(gl, vtxSource, fragSource);
+    const circlesShader = initShaderProgram(
+        gl,
+        circlesVtxSource,
+        circlesFragSource,
+    );
+    const programInfo: {
+        uniformLocations: {
+            aspect: WebGLUniformLocation;
+        };
+        attribLocations: { vertexPosition: number };
+        program: WebGLProgram;
+    } = {
+        program: networkShader,
         attribLocations: {
             vertexPosition: gl.getAttribLocation(
-                shaderProgram,
+                networkShader,
                 "aVertexPosition",
             ),
         },
         uniformLocations: {
-            aspect: gl.getUniformLocation(shaderProgram, "aspect")!!,
-            projectionMatrix: gl.getUniformLocation(
-                shaderProgram,
-                "uProjectionMatrix",
-            )!!,
+            aspect: gl.getUniformLocation(networkShader, "aspect")!!,
+        },
+    };
+    const programInfoCircles: {
+        uniformLocations: {
+            aspect: WebGLUniformLocation;
+            color: WebGLUniformLocation;
+            radius: WebGLUniformLocation;
+            center: WebGLUniformLocation;
+        };
+        program: WebGLProgram;
+    } = {
+        program: circlesShader,
+        uniformLocations: {
+            aspect: gl.getUniformLocation(circlesShader, "aspect")!!,
+            color: gl.getUniformLocation(circlesShader, "color")!!,
+            radius: gl.getUniformLocation(circlesShader, "radius")!!,
+            center: gl.getUniformLocation(circlesShader, "center")!!,
         },
     };
 
-    const buffers: { position: WebGLBuffer } = initBuffers(gl);
-    drawScene(gl, programInfo, buffers);
+    const buffers: { position: WebGLBuffer; vao: WebGLVertexArrayObject } =
+        initBuffers(gl);
+    drawScene(gl, programInfo, programInfoCircles, buffers);
 }

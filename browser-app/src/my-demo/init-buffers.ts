@@ -1,4 +1,5 @@
 export function initBuffers(gl: WebGL2RenderingContext): {
+    vao: WebGLVertexArrayObject;
     position: WebGLBuffer;
 } {
     const positionBuffer = initPositionBuffer(gl);
@@ -6,6 +7,7 @@ export function initBuffers(gl: WebGL2RenderingContext): {
 
     return {
         position: positionBuffer,
+        vao: gl.createVertexArray()!!,
     };
 }
 
