@@ -13,8 +13,8 @@ open class Data<Value, Label>(
 )
 
 class PosVsColor(
-    pos: XY,
-    color: String,
+    val pos: XY,
+    val color: String,
 ) : Data<XY, String>(pos, color)
 
 

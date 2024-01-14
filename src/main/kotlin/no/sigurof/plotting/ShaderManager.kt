@@ -1,13 +1,16 @@
 package no.sigurof.plotting
 
 import java.nio.FloatBuffer
+import org.joml.Matrix3f
+import org.joml.Matrix3x2fc
 import org.joml.Matrix4f
 import org.joml.Vector2f
 import org.joml.Vector3f
 import org.lwjgl.BufferUtils
 import org.lwjgl.opengl.GL20
+import org.lwjgl.system.MemoryUtil
 
-object ShaderManager {
+public object ShaderManager {
 
     private val matrixBuffer: FloatBuffer = BufferUtils.createFloatBuffer(16)
 
@@ -98,6 +101,12 @@ object ShaderManager {
     fun loadMatrix(location: Int, matrix4f: Matrix4f) {
         matrix4f.get(matrixBuffer)
         GL20.glUniformMatrix4fv(location, false, matrixBuffer)
+    }
+
+    fun loadMatrix3x3(location: Int, matrix3x3: FloatArray) {
+        val floatBuffer: FloatBuffer = MemoryUtil.memAllocFloat(9).put(matrix3x3).flip()
+        GL20.glUniformMatrix3fv(location, false, floatBuffer)
+        MemoryUtil.memFree(floatBuffer)
     }
 
     fun loadInt(location: Int, value: Int) {

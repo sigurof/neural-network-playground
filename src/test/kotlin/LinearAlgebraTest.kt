@@ -5,6 +5,8 @@ import io.kotest.matchers.throwable.shouldHaveMessage
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.matrixOfRows
 import no.sigurof.ml.matrixRow
+import no.sigurof.no.sigurof.ml.visualization.toJomlMatrix
+import org.joml.Vector3f
 
 
 class LinearAlgebraTest : FreeSpec({
@@ -13,21 +15,61 @@ class LinearAlgebraTest : FreeSpec({
         1 shouldBe 1
     }
 
+    "you can convert a 3x3 matrix to a joml matrix of same dimensions" - {
+        val matrix = Matrix(
+            rows = 3, data = doubleArrayOf(
+                1.0, 2.0, 3.0,
+                4.0, 5.0, 6.0,
+                7.0, 8.0, 9.0,
+            )
+        )
+        val jomlMatrix = matrix.toJomlMatrix()
+        jomlMatrix.getRow(0, Vector3f()) shouldBe Vector3f(1.0f, 2.0f, 3.0f)
+        jomlMatrix.getRow(1, Vector3f()) shouldBe Vector3f(4.0f, 5.0f, 6.0f)
+        jomlMatrix.getRow(2, Vector3f()) shouldBe Vector3f(7.0f, 8.0f, 9.0f)
+    }
 
-    "matrix multiplication" -{
-        // A 4 x 3 matrix
-        val a = Matrix(rows = 4, data = doubleArrayOf(
+    "you can create a new matrix with an added row" - {
+        val originalMatrix = Matrix(
+            rows = 4, data = doubleArrayOf(
+                1.0, 2.0, 3.0,
+                4.0, 5.0, 6.0,
+                7.0, 8.0, 9.0,
+                10.0, 11.0, 12.0,
+            )
+        )
+        val newMatrix = originalMatrix.plusRow(doubleArrayOf(1.0, 2.0, 3.0))
+        newMatrix.rows shouldBe 5
+        newMatrix.cols shouldBe 3
+        newMatrix.data shouldBe doubleArrayOf(
             1.0, 2.0, 3.0,
             4.0, 5.0, 6.0,
             7.0, 8.0, 9.0,
             10.0, 11.0, 12.0,
-        ))
+            1.0, 2.0, 3.0,
+        )
+
+    }
+
+
+    "matrix multiplication" - {
+        // A 4 x 3 matrix
+        val a = Matrix(
+            rows = 4, data = doubleArrayOf(
+                1.0, 2.0, 3.0,
+                4.0, 5.0, 6.0,
+                7.0, 8.0, 9.0,
+                10.0, 11.0, 12.0,
+            )
+        )
         // A 3 x 2 matrix
-        val b = Matrix(rows = 3, data = doubleArrayOf(
-            1.0, 2.0,
-            3.0, 4.0,
-            5.0, 6.0,
-        ))
+        val b = Matrix(
+            rows = 3, data = doubleArrayOf(
+                1.0, 2.0,
+                3.0, 4.0,
+                5.0, 6.0,
+            )
+        )
         // The result should be a 4 x 2 matrix
         val result: Matrix = a * b
         result.rows shouldBe 4

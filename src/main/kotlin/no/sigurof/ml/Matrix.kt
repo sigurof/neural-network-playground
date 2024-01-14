@@ -55,6 +55,23 @@ class Matrix(val rows: Int, val data: DoubleArray) {
         }
         return result
     }
+
+    fun plusRow(matrixRow: DoubleArray): Matrix {
+        require(
+            matrixRow.size == cols,
+            { "Failed to add row. The number of elements in the row must be equal to the number of columns in the matrix. ${matrixRow.size} != $cols" }
+        )
+        val newNumRows = this.rows + 1
+        val newData = data.copyOf(cols * newNumRows)
+        matrixRow.forEachIndexed { index, value ->
+            newData[(newNumRows - 1) * cols + index] = value
+        }
+        return Matrix(
+            rows = newNumRows,
+            data = newData
+        )
+
+    }
 }
 
 fun randomArray2(rows: Int, cols: Int): Matrix {
