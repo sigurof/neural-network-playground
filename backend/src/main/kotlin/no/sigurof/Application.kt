@@ -1,4 +1,5 @@
 package no.sigurof
+
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.server.application.*
@@ -8,10 +9,11 @@ import io.ktor.server.plugins.cors.routing.CORS
 import no.sigurof.plugins.configureRouting
 import no.sigurof.plugins.configureSerialization
 
-fun startKtorServer(){
+fun startKtorServer() {
     embeddedServer(Netty, port = 8080, host = "0.0.0.0", module = Application::module)
         .start(wait = true)
 }
+
 fun Application.module() {
     install(CORS) {
         allowMethod(HttpMethod.Options)

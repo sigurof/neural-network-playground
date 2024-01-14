@@ -8,27 +8,16 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
-import java.awt.Color
-import java.awt.image.BufferedImage
-import java.io.ByteArrayOutputStream
-import kotlinx.serialization.Serializable
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.NetworkConnectionInfo
 import no.sigurof.ml.NeuralNetwork
 import no.sigurof.ml.NeuralNetworkBuilder
-import no.sigurof.ml.Record
 import no.sigurof.ml.WeightsAndBiases
-import no.sigurof.ml.XY
 import no.sigurof.models.MatrixDto
 import no.sigurof.models.NeuralNetworkParams
-import no.sigurof.routes.model.WeightsInput
-
-
-@Serializable
-data class MlResponse(
-    val layers: List<MatrixDto>,
-    val record: List<Record>,
-) {}
+import java.awt.Color
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 
 fun Route.machineLearningRouting() {
     get("/") {
@@ -36,26 +25,29 @@ fun Route.machineLearningRouting() {
     }
 
     post("/ml/network") {
-        val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>();
-        val includeProfiling = call.request.queryParameters["includeProfiling"]?.toBoolean() ?: false
-        val neuralNetworkBuilder = NeuralNetworkBuilder(neuralNetworkParams)
-        val neuralNetwork: NeuralNetwork = neuralNetworkBuilder.trainNew(includeProfiling = includeProfiling)
-        val weights: List<MatrixDto> = neuralNetwork.weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
-        call.respond(MlResponse(layers = weights, record = neuralNetworkBuilder.record))
+        val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>()
+        val recordCostFunction = call.request.queryParameters["recordCostFunction"]?.toBoolean() ?: false
+        val trainingResult =
+            NeuralNetworkBuilder(neuralNetworkParams)
+                .trainNew(recordCostFunction = recordCostFunction)
+        call.respond(trainingResult.toTrainedNeuralNetworkResponse())
     }
 
-
     post("/ml/evaluate") {
-        val weightsInput = call.receive<List<WeightsInput>>()
-        val neuralNetwork = NeuralNetwork(WeightsAndBiases(
-            data = weightsInput.flatMap { it.data.flatten() }.toDoubleArray(),
-            networkConnectionsIn = weightsInput.map {
-                NetworkConnectionInfo(
-                    inputs = it.columns - 1,
-                    outputs = it.rows,
-                )
-            }
-        ))
+        val weightsRequest = call.receive<List<WeightsRequest>>()
+        val neuralNetwork =
+            NeuralNetwork(
+                WeightsAndBiases(
+                    data = weightsRequest.flatMap { it.data.flatten() }.toDoubleArray(),
+                    networkConnectionsIn =
+                        weightsRequest.map {
+                            NetworkConnectionInfo(
+                                inputs = it.columns - 1,
+                                outputs = it.rows,
+                            )
+                        },
+                ),
+            )
         val xPixels = 100
         val yPixels = 100
         val startX = -1.0
@@ -74,11 +66,12 @@ fun Route.machineLearningRouting() {
                 val input = doubleArrayOf(xValue, yValue)
                 val output = neuralNetwork.evaluateActivations(input).last()
 
-                val color = Color(
-                    (output[0] * 255.0).toInt(),
-                    0,
-                    (output[1] * 255.0).toInt()
-                )
+                val color =
+                    Color(
+                        (output[0] * 255.0).toInt(),
+                        0,
+                        (output[1] * 255.0).toInt(),
+                    )
                 image.setRGB(x, y, color.rgb)
             }
         }
@@ -86,8 +79,13 @@ fun Route.machineLearningRouting() {
         javax.imageio.ImageIO.write(image, "png", outputStream)
         val bytes = outputStream.toByteArray()
         call.respondBytes(bytes)
-
     }
+}
+
+private fun NeuralNetworkBuilder.TrainingResult.toTrainedNeuralNetworkResponse(): TrainedNeuralNetworkResponse {
+    val weights: List<MatrixDto> =
+        neuralNetwork.weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
+    return TrainedNeuralNetworkResponse(layers = weights, record = record)
 }
 
 fun Matrix.toMatrixDto(): MatrixDto {
@@ -95,7 +93,6 @@ fun Matrix.toMatrixDto(): MatrixDto {
     return MatrixDto(
         rows = this.rows,
         columns = this.cols,
-        data = chunkedData
+        data = chunkedData,
     )
-
 }

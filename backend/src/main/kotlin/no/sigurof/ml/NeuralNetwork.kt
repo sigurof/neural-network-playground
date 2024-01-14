@@ -10,7 +10,6 @@ private fun DoubleArray.concat(i: Int): DoubleArray {
     return DoubleArray(this.size + i) { if (it < this.size) this[it] else 1.0 }
 }
 
-
 class WeightsAndBiases(
     val data: DoubleArray,
     val weightsLayers: List<WeightsLayer>,
@@ -30,9 +29,12 @@ class WeightsAndBiases(
     ) : this(weightsLayers = createLayers(networkConnectionsIn, data), data = data)
 
     companion object {
-        fun createLayers(networkConnectionsIn: List<NetworkConnectionInfo>, data: DoubleArray): List<WeightsLayer> {
+        fun createLayers(
+            networkConnectionsIn: List<NetworkConnectionInfo>,
+            data: DoubleArray,
+        ): List<WeightsLayer> {
             val weightsLayers = mutableListOf<WeightsLayer>()
-            var lastEndIndex = 0;
+            var lastEndIndex = 0
             for (index in networkConnectionsIn.indices) {
                 val connection = networkConnectionsIn[index]
                 val size = connection.weights + connection.biases
@@ -44,39 +46,38 @@ class WeightsAndBiases(
                         endIndex = newEndIndex,
                         inputs = connection.inputs,
                         outputs = connection.outputs,
-                        matrix = Matrix(
-                            rows = connection.matrixRows,
-                            // TODO Don't copy the array here
+                        matrix =
+                            Matrix(
+                                rows = connection.matrixRows,
+                                // TODO Don't copy the array here
 //                            data = data.slice(lastEndIndex, newEndIndex)
-                            data = data.sliceArray(lastEndIndex until newEndIndex)
-                        )
-                    )
+                                data = data.sliceArray(lastEndIndex until newEndIndex),
+                            ),
+                    ),
                 )
-                lastEndIndex = newEndIndex;
+                lastEndIndex = newEndIndex
             }
             return weightsLayers
         }
 
-        fun populate(networkConnectionsIn: List<NetworkConnectionInfo>, initMethod: (Int) -> Double): WeightsAndBiases {
+        fun populate(
+            networkConnectionsIn: List<NetworkConnectionInfo>,
+            initMethod: (Int) -> Double,
+        ): WeightsAndBiases {
             return WeightsAndBiases(
                 networkConnectionsIn = networkConnectionsIn,
-                initMethod = initMethod
+                initMethod = initMethod,
             )
         }
     }
 
-
     constructor(networkConnectionsIn: List<NetworkConnectionInfo>, initMethod: (Int) -> Double) : this(
         networkConnectionsIn = networkConnectionsIn,
-        data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod)
+        data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod),
     )
-
 }
 
-
 class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
-
-
     internal fun calculateCostFunction(trainingData: List<InputVsOutput>): Double {
         return trainingData.map { trainingDataPoint: InputVsOutput ->
             val outputActivations: DoubleArray = evaluateActivations(trainingDataPoint.input).last()
@@ -97,8 +98,6 @@ class NeuralNetwork(val weightsAndBiases: WeightsAndBiases) {
         }
         return activations
     }
-
-
 }
 
 fun DoubleArray.mutablyAddElementwise(gradientContributionsOfPreviousLayers: DoubleArray): DoubleArray {
@@ -108,4 +107,3 @@ fun DoubleArray.mutablyAddElementwise(gradientContributionsOfPreviousLayers: Dou
     }
     return this
 }
-
