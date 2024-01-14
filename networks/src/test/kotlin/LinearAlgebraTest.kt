@@ -5,7 +5,6 @@ import io.kotest.matchers.throwable.shouldHaveMessage
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.matrixOfRows
 import no.sigurof.ml.matrixRow
-import org.joml.Vector3f
 
 
 class LinearAlgebraTest : FreeSpec({
