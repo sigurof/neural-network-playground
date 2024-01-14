@@ -2,13 +2,9 @@ package no.sigurof.ml
 
 import kotlin.math.exp
 
-fun elementwiseSigmoid(vector: DoubleArray): DoubleArray {
-    return DoubleArray(vector.size) { index -> 1.0 / (1.0 + exp(-vector[index])) }
-}
+fun elementwiseSigmoid(vector: DoubleArray) = DoubleArray(vector.size) { index -> 1.0 / (1.0 + exp(-vector[index])) }
 
-private fun DoubleArray.concat(i: Int): DoubleArray {
-    return DoubleArray(this.size + i) { if (it < this.size) this[it] else 1.0 }
-}
+private fun DoubleArray.concat(i: Int) = DoubleArray(this.size + i) { if (it < this.size) this[it] else 1.0 }
 
 class WeightsAndBiases(
     val data: DoubleArray,
@@ -51,9 +47,9 @@ class WeightsAndBiases(
                                 rows = connection.matrixRows,
                                 // TODO Don't copy the array here
 //                            data = data.slice(lastEndIndex, newEndIndex)
-                                data = data.sliceArray(lastEndIndex until newEndIndex),
-                            ),
-                    ),
+                                data = data.sliceArray(lastEndIndex until newEndIndex)
+                            )
+                    )
                 )
                 lastEndIndex = newEndIndex
             }
@@ -63,17 +59,15 @@ class WeightsAndBiases(
         fun populate(
             networkConnectionsIn: List<NetworkConnectionInfo>,
             initMethod: (Int) -> Double,
-        ): WeightsAndBiases {
-            return WeightsAndBiases(
-                networkConnectionsIn = networkConnectionsIn,
-                initMethod = initMethod,
-            )
-        }
+        ) = WeightsAndBiases(
+            networkConnectionsIn = networkConnectionsIn,
+            initMethod = initMethod
+        )
     }
 
     constructor(networkConnectionsIn: List<NetworkConnectionInfo>, initMethod: (Int) -> Double) : this(
         networkConnectionsIn = networkConnectionsIn,
-        data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod),
+        data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod)
     )
 }
 

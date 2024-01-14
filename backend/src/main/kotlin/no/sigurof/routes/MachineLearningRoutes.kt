@@ -8,6 +8,9 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
+import java.awt.Color
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
 import no.sigurof.ml.Matrix
 import no.sigurof.ml.NetworkConnectionInfo
 import no.sigurof.ml.NeuralNetwork
@@ -15,9 +18,6 @@ import no.sigurof.ml.NeuralNetworkBuilder
 import no.sigurof.ml.WeightsAndBiases
 import no.sigurof.models.MatrixDto
 import no.sigurof.models.NeuralNetworkParams
-import java.awt.Color
-import java.awt.image.BufferedImage
-import java.io.ByteArrayOutputStream
 
 fun Route.machineLearningRouting() {
     get("/") {
@@ -43,10 +43,10 @@ fun Route.machineLearningRouting() {
                         weightsRequest.map {
                             NetworkConnectionInfo(
                                 inputs = it.columns - 1,
-                                outputs = it.rows,
+                                outputs = it.rows
                             )
-                        },
-                ),
+                        }
+                )
             )
         val xPixels = 100
         val yPixels = 100
@@ -70,7 +70,7 @@ fun Route.machineLearningRouting() {
                     Color(
                         (output[0] * 255.0).toInt(),
                         0,
-                        (output[1] * 255.0).toInt(),
+                        (output[1] * 255.0).toInt()
                     )
                 image.setRGB(x, y, color.rgb)
             }
@@ -93,6 +93,6 @@ fun Matrix.toMatrixDto(): MatrixDto {
     return MatrixDto(
         rows = this.rows,
         columns = this.cols,
-        data = chunkedData,
+        data = chunkedData
     )
 }

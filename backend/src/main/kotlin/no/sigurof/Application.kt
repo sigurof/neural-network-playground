@@ -2,9 +2,10 @@ package no.sigurof
 
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
-import io.ktor.server.application.*
-import io.ktor.server.engine.*
-import io.ktor.server.netty.*
+import io.ktor.server.application.Application
+import io.ktor.server.application.install
+import io.ktor.server.engine.embeddedServer
+import io.ktor.server.netty.Netty
 import io.ktor.server.plugins.cors.routing.CORS
 import no.sigurof.plugins.configureRouting
 import no.sigurof.plugins.configureSerialization
