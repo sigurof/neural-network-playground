@@ -5,6 +5,7 @@ import { SectionBox } from "../Common.tsx";
 import styled from "styled-components";
 import { styled as muiStyled } from "@mui/material/styles";
 import { OverrideDialog } from "./OverrideDialog.tsx";
+import { toast } from "react-toastify";
 
 function valuetext(value: number) {
     return `${value}°C`;
@@ -38,8 +39,9 @@ const LargeButton = muiStyled(Button)(({ theme }: { theme: any }) => ({
     fontSize: "1.2rem",
 }));
 
-const CLIENT_EVENT_BASE = "no.sigurof.ml.server.ClientEvent";
-const SERVER_EVENT_BASE = "no.sigurof.ml.server.ServerEvent";
+const EVENTS_BASE = "no.sigurof.ml.server.web.websockets";
+const CLIENT_EVENT_BASE = `${EVENTS_BASE}.ClientEvent`;
+const SERVER_EVENT_BASE = `${EVENTS_BASE}.ServerEvent`;
 
 const serverEvents = {
     askSetModel: `${SERVER_EVENT_BASE}.AskSetModel`,
@@ -214,6 +216,7 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                             setAwaitingResponse(true);
                             const socket = new WebSocket("ws://localhost:8080/ml/network");
                             socket.addEventListener("open", () => {
+                                console.log("opened");
                                 socket.send(newModelEvent(sessionId, parseHiddenLayers(layers), numTraining, false));
                             });
                             socket.addEventListener("message", (event) => {
@@ -231,6 +234,7 @@ export const CreateModel = ({ onCostUpdate }: { onCostUpdate: RefObject<(cost: n
                                 }
                                 if (data.type === serverEvents.clientError) {
                                     console.log("Client error: ", data.message);
+                                    toast.error(data.message);
                                     setAwaitingResponse(false);
                                     setRunning(false);
                                     webSocket.current?.close();

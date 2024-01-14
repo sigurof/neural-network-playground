@@ -5,7 +5,6 @@ import kotlinx.serialization.Serializable
 import no.sigurof.ml.neuralnetwork.backpropagation.BackPropagation
 import no.sigurof.ml.neuralnetwork.backpropagation.GradientDescent
 import no.sigurof.ml.neuralnetwork.backpropagation.increment
-import no.sigurof.ml.routes.NeuralNetworkParams
 
 @Serializable
 data class InputVsOutput(
@@ -35,13 +34,8 @@ class Record(
 
 class NeuralNetworkBuilder(
     hiddenLayerDimensions: List<Int>,
-    private val trainingData: List<InputVsOutput>,
+    trainingData: List<InputVsOutput>,
 ) {
-    constructor(hiddenLayerDimensions: NeuralNetworkParams) : this(
-        hiddenLayerDimensions = hiddenLayerDimensions.hiddenLayerDimensions,
-        trainingData = hiddenLayerDimensions.trainingData
-    )
-
     private val inputLayer = trainingData.first().input.size
     private val outputLayer = trainingData.first().output.size
     private var networkConnections: List<NetworkConnectionInfo> =

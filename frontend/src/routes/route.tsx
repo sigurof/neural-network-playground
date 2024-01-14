@@ -1,4 +1,5 @@
 import { Link, Outlet } from "react-router-dom";
+import "react-toastify/dist/ReactToastify.css";
 import { ErrorPage } from "../ErrorPage.tsx";
 import Contact from "./Contact.tsx";
 import { Demo2x2RedBlue } from "../demos/2x2/Demo2x2RedBlue.tsx";
@@ -6,8 +7,9 @@ import { Demo2x3x2RedAndBlue } from "../demos/2x3x2/Demo2x3x2RedAndBlue.tsx";
 import React from "react";
 import { Demo as Demo4Layers } from "../demos/2x3x3x3/Demo.tsx";
 import { Demo as DemoDynamicShader } from "../demos/dynamic-shader/Demo.tsx";
-import { Demo as MnistDemo } from "../demos/mnist/Demo.tsx";
+import { Mnist as MnistDemo } from "../demos/mnist/Mnist.tsx";
 import styled from "styled-components";
+import { ToastContainer } from "react-toastify";
 
 const path22 = "/ml/demos/22";
 const path232 = `/ml/demos/232`;
@@ -68,6 +70,7 @@ const Detail = styled.div`
 export default function Root() {
     return (
         <>
+            <ToastContainer />
             <Wrapper>
                 <Sidebar>
                     <h1>Demos side bar</h1>

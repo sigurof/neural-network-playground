@@ -2,7 +2,7 @@ import styled from "styled-components";
 import { MutableRefObject, useCallback, useEffect, useRef, useState } from "react";
 import LinePlot from "./LinePlot.tsx";
 import { SectionBox } from "./Common.tsx";
-import { CreateModel } from "./create-model";
+import { CreateModel } from "./create-model/CreateModel.tsx";
 
 const DemoBed = styled.div`
     min-height: 100vh;
@@ -31,7 +31,7 @@ const TestingGrounds = () => {
     );
 };
 
-export const Demo = () => {
+export const Mnist = () => {
     const [cost, setCost] = useState<number[]>([0, 0, 0]);
     const onCostUpdate = useCallback(
         (newCost: number) => {

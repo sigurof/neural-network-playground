@@ -1,35 +1,31 @@
-package no.sigurof.ml.routes
+package no.sigurof.ml.server.web.rest
 
 import kotlinx.serialization.Serializable
 import no.sigurof.ml.neuralnetwork.InputVsOutput
 import no.sigurof.ml.neuralnetwork.Record
 
 @Serializable
-class WeightsRequest(
+internal class InWeights(
     val rows: Int,
     val columns: Int,
     val data: List<List<Double>>,
 )
 
 @Serializable
-data class TrainedNeuralNetworkResponse(
-    val layers: List<MatrixDto>,
+data class OutTrainedNeuralNetwork(
+    val layers: List<OutMatrix>,
     val record: List<Record>,
 )
 
 @Serializable
-data class MatrixDto(
+data class OutMatrix(
     val rows: Int,
     val columns: Int,
     val data: List<List<Double>>,
 )
 
 @Serializable
-data class NeuralNetworkParams(
+internal data class InNeuralNetwork(
     val trainingData: List<InputVsOutput>,
     val hiddenLayerDimensions: List<Int>,
-)
-
-data class WeightsDto(
-    val weights: List<List<Double>>,
 )

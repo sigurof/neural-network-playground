@@ -1,6 +1,11 @@
-package no.sigurof.ml.routes
+package no.sigurof.ml.server.web.rest
 
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
+import io.ktor.server.application.Application
 import io.ktor.server.application.call
+import io.ktor.server.application.install
+import io.ktor.server.plugins.cors.routing.CORS
 import io.ktor.server.request.receive
 import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
@@ -16,6 +21,7 @@ import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
 import no.sigurof.ml.neuralnetwork.WeightsAndBiases
 import no.sigurof.ml.server.Model
 import no.sigurof.ml.server.Session
+import no.sigurof.ml.server.plugins.configureSerialization
 import no.sigurof.ml.server.sessions
 import no.sigurof.ml.utils.Matrix
 
@@ -39,23 +45,26 @@ fun Map.Entry<String, Session>.toResponse() =
         model = this.value.model
     )
 
-fun Route.machineLearningRouting() {
+fun Route.restRoutes() {
     get("/ml/sessions") {
         val message: List<SessionDto> = sessions.map { it.toResponse() }
         call.respond(message)
     }
 
     post("/ml/network") {
-        val neuralNetworkParams: NeuralNetworkParams = call.receive<NeuralNetworkParams>()
+        val inNeuralNetwork: InNeuralNetwork = call.receive<InNeuralNetwork>()
         val shouldRecordCostFunction = call.request.queryParameters["recordCostFunction"]?.toBoolean() ?: false
         val trainingResult =
-            NeuralNetworkBuilder(neuralNetworkParams)
+            NeuralNetworkBuilder(
+                trainingData = inNeuralNetwork.trainingData,
+                hiddenLayerDimensions = inNeuralNetwork.hiddenLayerDimensions
+            )
                 .trainNew(shouldRecordCostFunction)
         call.respond(trainingResult.toResponse())
     }
 
     post("/ml/evaluate") {
-        val weightsRequest = call.receive<List<WeightsRequest>>()
+        val weightsRequest = call.receive<List<InWeights>>()
         val neuralNetwork =
             WeightsAndBiases(
                 data = weightsRequest.flatMap { it.data.flatten() }.toDoubleArray(),
@@ -99,17 +108,33 @@ fun Route.machineLearningRouting() {
     }
 }
 
-private fun NeuralNetworkBuilder.TrainingResult.toResponse(): TrainedNeuralNetworkResponse {
-    val weights: List<MatrixDto> =
+private fun NeuralNetworkBuilder.TrainingResult.toResponse(): OutTrainedNeuralNetwork {
+    val weights: List<OutMatrix> =
         weightsAndBiases.weightsLayers.map { it.matrix.toMatrixDto() }
-    return TrainedNeuralNetworkResponse(layers = weights, record = record)
+    return OutTrainedNeuralNetwork(layers = weights, record = record)
 }
 
-fun Matrix.toMatrixDto(): MatrixDto {
+fun Matrix.toMatrixDto(): OutMatrix {
     val chunkedData: List<List<Double>> = this.data.toList().chunked(this.cols)
-    return MatrixDto(
+    return OutMatrix(
         rows = this.rows,
         columns = this.cols,
         data = chunkedData
     )
+}
+
+fun Application.restModule() {
+    install(CORS) {
+        allowMethod(HttpMethod.Options)
+        allowMethod(HttpMethod.Put)
+        allowMethod(HttpMethod.Post)
+        allowMethod(HttpMethod.Delete)
+        allowHeader(HttpHeaders.Authorization)
+        allowHeader(HttpHeaders.ContentType)
+        allowHeader(HttpHeaders.AccessControlAllowOrigin) // Explicitly allow this header
+        allowCredentials = true
+        allowNonSimpleContentTypes = true
+        anyHost()
+    }
+    configureSerialization()
 }
