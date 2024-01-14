@@ -2,10 +2,10 @@ import io.kotest.core.spec.style.FreeSpec
 import io.kotest.matchers.doubles.plusOrMinus
 import io.kotest.matchers.shouldBe
 import java.lang.String.format
-import kotlin.math.exp
 import kotlin.random.Random
-import no.sigurof.ml.InputVsOutput
-import no.sigurof.ml.NeuralNetworkBuilder
+import no.sigurof.ml.neuralnetwork.InputVsOutput
+import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
+import no.sigurof.ml.neuralnetwork.backpropagation.BackPropagation
 
 class BackpropagationTest : FreeSpec({
 
@@ -25,7 +25,7 @@ class BackpropagationTest : FreeSpec({
                 )
             val buildNetwork =
                 neuralNetworkBuilder
-                    .buildNetwork(
+                    .weightsAndBiases(
                         doubleArrayOf(
                             0.0, 0.0, 0.0,
                             0.0, 0.0, 0.0
@@ -34,7 +34,7 @@ class BackpropagationTest : FreeSpec({
             val inefficientGradient =
                 neuralNetworkBuilder.calculateGradientInefficiently(buildNetwork, trainingData)
             val backpropagationGradient =
-                neuralNetworkBuilder.calculateGradientBackpropagationNew(buildNetwork, trainingData)
+                BackPropagation.calculateGradient(buildNetwork, trainingData)
             val inefficientGradientFormatted = inefficientGradient.map { format("%.15f", it) }
             val backpropagationGradientFormatted = backpropagationGradient.map { format("%.15f", it) }
             println("Inefficient     gradient: $inefficientGradientFormatted")
@@ -64,7 +64,7 @@ class BackpropagationTest : FreeSpec({
             val inefficientGradient =
                 neuralNetworkBuilder.calculateGradientInefficiently(buildNetwork, trainingData)
             val backpropagationGradient =
-                neuralNetworkBuilder.calculateGradientBackpropagationNew(buildNetwork, trainingData)
+                BackPropagation.calculateGradient(buildNetwork, trainingData)
             val inefficientGradientFormatted = inefficientGradient.map { format("%.15f", it) }
             val backpropagationGradientFormatted = backpropagationGradient.map { format("%.15f", it) }
             println("Inefficient     gradient: $inefficientGradientFormatted")
@@ -84,18 +84,6 @@ class BackpropagationTest : FreeSpec({
 
 private operator fun DoubleArray.unaryMinus(): DoubleArray {
     return DoubleArray(this.size) { i -> -this[i] }
-}
-
-private fun DoubleArray.addElementwise(right: DoubleArray): DoubleArray {
-    val result = DoubleArray(this.size)
-    for (i in this.indices) {
-        result[i] = this[i] + right[i]
-    }
-    return result
-}
-
-fun sigmoid(a0L: Double): Double {
-    return 1.0 / (1.0 + exp(-a0L))
 }
 
 private operator fun Double.times(doubleArrayOf: DoubleArray): DoubleArray {

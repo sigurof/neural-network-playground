@@ -1,6 +1,7 @@
-package no.sigurof.ml
+package no.sigurof.ml.neuralnetwork
 
 import kotlin.math.exp
+import no.sigurof.ml.utils.Matrix
 
 fun elementwiseSigmoid(vector: DoubleArray) = DoubleArray(vector.size) { index -> 1.0 / (1.0 + exp(-vector[index])) }
 
@@ -92,10 +93,10 @@ class WeightsAndBiases(
     }
 }
 
-fun DoubleArray.mutablyAddElementwise(gradientContributionsOfPreviousLayers: DoubleArray): DoubleArray {
-    require(this.size == gradientContributionsOfPreviousLayers.size) { "The two arrays must have the same size" }
+fun DoubleArray.mutablyAddElementwise(other: DoubleArray): DoubleArray {
+    require(this.size == other.size) { "The two arrays must have the same size" }
     for (index in this.indices) {
-        this[index] += gradientContributionsOfPreviousLayers[index]
+        this[index] += other[index]
     }
     return this
 }

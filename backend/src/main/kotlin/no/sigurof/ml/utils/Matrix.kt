@@ -1,4 +1,4 @@
-package no.sigurof.ml
+package no.sigurof.ml.utils
 
 import kotlinx.serialization.Serializable
 
@@ -9,8 +9,8 @@ class Matrix(val rows: Int, val data: DoubleArray) {
             data.size % rows == 0
         ) {
             """
-            Failed to initialize matrix. The number of elements per row must be an 
-            integer but was ${data.size}/$rows = ${data.size.toDouble() / rows}.    
+            Failed to initialize matrix. The number of elements per row must be an
+            integer but was ${data.size}/$rows = ${data.size.toDouble() / rows}.
             """.trimIndent()
         }
     }

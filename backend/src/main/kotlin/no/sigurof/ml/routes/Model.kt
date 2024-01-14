@@ -1,8 +1,8 @@
-package no.sigurof.routes
+package no.sigurof.ml.routes
 
 import kotlinx.serialization.Serializable
-import no.sigurof.ml.InputVsOutput
-import no.sigurof.ml.Record
+import no.sigurof.ml.neuralnetwork.InputVsOutput
+import no.sigurof.ml.neuralnetwork.Record
 
 @Serializable
 class WeightsRequest(
