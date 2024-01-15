@@ -48,13 +48,13 @@ data class IterativeServerClientSession(
 
 class NeuralNetworkServerClientSession(
     var progress: Int,
-    var result: NeuralNetwork,
+    var result: NeuralNetwork?,
     var model: Model,
 ) {
     companion object {
         fun new(
             model: Model,
-            baseState: NeuralNetwork,
+            baseState: NeuralNetwork?,
         ): NeuralNetworkServerClientSession {
             return NeuralNetworkServerClientSession(
                 progress = 0,

@@ -15,6 +15,7 @@ const DemoBed = styled.div`
 `;
 
 const CostGraph = ({ cost }: { cost: number[] }) => {
+    console.log("cost", cost);
     return (
         <SectionBox>
             <h2>Network Performance</h2>
@@ -50,7 +51,7 @@ export const Mnist = () => {
     };
     const onCostUpdate: OnNeuralNetworkUpdate = useCallback(
         (update: Update) => {
-            const cost = new NeuralNetwork(update.neuralNetwork).evaluateCost(testData);
+            const cost = testData.length > 0 ? new NeuralNetwork(update.neuralNetwork).evaluateCost(testData) : 0;
             handleUpdate("cost", cost);
         },
         [lines],

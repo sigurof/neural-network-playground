@@ -3,7 +3,8 @@ import circlesVtxSource from "./shaders/circles/vertex.shader?raw";
 import circlesFragSource from "./shaders/circles/fragment.shader?raw";
 import networkVtxSource from "./shaders/network/vertex.shader?raw";
 import networkFragSource from "./shaders/network/fragment.shader?raw";
-import { MatrixDto, NetworkConnection } from "./Demo.tsx";
+import { NetworkConnection } from "./Demo.tsx";
+import { MatrixDto } from "../../api/api.ts";
 
 const SQUARE: number[] = [-1.0, -1.0, 1.0, -1.0, 1.0, 1.0, -1.0, -1.0, 1.0, 1.0, -1.0, 1.0];
 
@@ -133,7 +134,7 @@ const interval = 1000 / fps;
 function createLayers(networkLayers: MatrixDto[]): {
     allWeightsAndBiases: Float32Array;
 } {
-    const numbers: number[] = networkLayers.flatMap((matrix) =>
+    const numbers: number[] = networkLayers.flatMap((matrix: MatrixDto) =>
         matrix.data.flatMap((row) => row),
     );
     return {

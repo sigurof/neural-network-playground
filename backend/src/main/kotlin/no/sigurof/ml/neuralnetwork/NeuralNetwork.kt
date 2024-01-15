@@ -17,8 +17,8 @@ class PublicConnection(
 )
 
 class NeuralNetwork private constructor(
-    val data: DoubleArray,
     private val connections: List<WeightsLayer>,
+    val data: DoubleArray,
 ) {
     val layerSizes: List<Int> =
         connections.map { it.neuralNetworkConnectionSpec.inputs } + connections.last().neuralNetworkConnectionSpec.outputs
@@ -35,14 +35,22 @@ class NeuralNetwork private constructor(
             }
 
     constructor(
-        networkConnectionsIn: List<NeuralNetworkConnectionSpec>,
         data: DoubleArray,
+        networkConnectionsIn: List<NeuralNetworkConnectionSpec>,
     ) : this(
-        connections = createLayers(networkConnectionsIn, data),
-        data = data
+        data = data,
+        connections = createLayers(networkConnectionsIn, data)
     )
 
-    class WeightsLayer(
+    constructor(
+        networkConnectionsIn: List<NeuralNetworkConnectionSpec>,
+        initMethod: (Int) -> Double,
+    ) : this(
+        data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod),
+        networkConnectionsIn = networkConnectionsIn
+    )
+
+    private class WeightsLayer(
         val index: Int,
         val matrix: Matrix,
         val startIndex: Int,
@@ -79,20 +87,7 @@ class NeuralNetwork private constructor(
             }
             return weightsLayers
         }
-
-        fun populate(
-            networkConnectionsIn: List<NeuralNetworkConnectionSpec>,
-            initMethod: (Int) -> Double,
-        ) = NeuralNetwork(
-            networkConnectionsIn = networkConnectionsIn,
-            initMethod = initMethod
-        )
     }
-
-    constructor(networkConnectionsIn: List<NeuralNetworkConnectionSpec>, initMethod: (Int) -> Double) : this(
-        networkConnectionsIn = networkConnectionsIn,
-        data = DoubleArray(networkConnectionsIn.sumOf { it.weights + it.biases }, initMethod)
-    )
 
     internal fun calculateCostFunction(trainingData: List<InputVsOutput>): Double {
         return trainingData.map { trainingDataPoint: InputVsOutput ->

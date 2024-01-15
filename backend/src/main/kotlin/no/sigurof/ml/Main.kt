@@ -6,9 +6,9 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import javax.imageio.ImageIO
 import no.sigurof.ml.datasets.MNIST
+import no.sigurof.ml.neuralnetwork.CostUpdate
 import no.sigurof.ml.neuralnetwork.InputVsOutput
 import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
-import no.sigurof.ml.neuralnetwork.Record
 import no.sigurof.ml.server.startKtorServer
 
 fun main() {
@@ -16,8 +16,8 @@ fun main() {
     startKtorServer()
 }
 
-fun trainMnist() {
-    val record: MutableList<Record> = mutableListOf()
+suspend fun trainMnist() {
+    val costUpdate: MutableList<CostUpdate> = mutableListOf()
     val trainingData =
         MNIST.parseTrainingData(10)
             .labeledImages
@@ -33,10 +33,10 @@ fun trainMnist() {
             trainingData = trainingData
         )
     val trainingResult =
-        neuralNetworkBuilder.trainNew2(iterationCallback = { step, weightsAndBiases ->
+        neuralNetworkBuilder.train(iterationCallback = { step, weightsAndBiases ->
             if (step % 50 == 0) {
-                record.add(
-                    Record(
+                costUpdate.add(
+                    CostUpdate(
                         step = step,
                         cost = weightsAndBiases.calculateCostFunction(trainingData)
                     )

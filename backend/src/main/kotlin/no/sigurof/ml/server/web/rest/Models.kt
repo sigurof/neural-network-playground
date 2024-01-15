@@ -1,8 +1,8 @@
 package no.sigurof.ml.server.web.rest
 
 import kotlinx.serialization.Serializable
+import no.sigurof.ml.neuralnetwork.CostUpdate
 import no.sigurof.ml.neuralnetwork.InputVsOutput
-import no.sigurof.ml.neuralnetwork.Record
 import no.sigurof.ml.server.web.MatrixDto
 import no.sigurof.ml.server.web.common.NeuralNetworkDto
 
@@ -25,7 +25,7 @@ data class ConnectionDto(
 @Serializable
 data class TrainedNeuralNetworkDto(
     val neuralNetwork: NeuralNetworkDto,
-    val record: List<Record>,
+    val costUpdate: List<CostUpdate>,
 )
 
 @Serializable

@@ -1,12 +1,10 @@
 import { RefObject, useEffect, useRef, useState } from "react";
-import axios from "axios";
 import { Button, CircularProgress, MenuItem, Select, Slider, TextField, Typography } from "@mui/material";
 import { SectionBox } from "../Common.tsx";
 import styled from "styled-components";
 import { styled as muiStyled } from "@mui/material/styles";
 import { OverrideDialog } from "./OverrideDialog.tsx";
 import { toast } from "react-toastify";
-import { NeuralNetwork } from "../../../common/ml/neural-network.ts";
 import { api, InputVsOutput, ServerEvent, serverEvents, SessionDto, Update } from "../../../api/api.ts";
 
 function valuetext(value: number) {
@@ -82,12 +80,11 @@ function parseHiddenLayers(layers: string) {
         .map((it) => parseInt(it));
 }
 
-export type OnTestDataLoaded = (testData: InputVsOutput[]) => void;
 export const CreateAndTrainModel = ({
     onNeuralNetworkUpdate,
     onTestDataLoaded,
 }: {
-    onTestDataLoaded: OnTestDataLoaded;
+    onTestDataLoaded: (testData: InputVsOutput[]) => void;
     onNeuralNetworkUpdate: RefObject<(update: Update) => void>;
 }) => {
     const [layers, setLayers] = useState<string>("");
@@ -234,8 +231,9 @@ export const CreateAndTrainModel = ({
             </GridContainer>
             <ButtonContainer>
                 <LargeButton
-                    onClick={() => {
-                        api.getTestData(numTest).then((testData) => onTestDataLoaded(testData));
+                    onClick={async () => {
+                        const testData =  await api.getTestData(numTest)//.then((testData) => onTestDataLoaded(testData));
+                        onTestDataLoaded(testData);
                         if (running) {
                             webSocket.current?.close();
                             setRunning(false);

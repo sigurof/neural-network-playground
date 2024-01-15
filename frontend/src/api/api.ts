@@ -43,14 +43,14 @@ export type ClientError = {
 
 export type ServerEvent = AskSetModel | Update | ClientError;
 
-export type Record = {
+export type CostUpdate = {
     step: number;
     cost: number;
 };
 
 export type TrainedNeuralNetworkDto = {
     neuralNetwork: NeuralNetworkDto;
-    record: Record[];
+    costUpdate: CostUpdate[];
 };
 
 export type ModelDto = {
@@ -62,7 +62,7 @@ export type ModelDto = {
 export type SessionDto = {
     id: string;
     progress: number;
-    result: NeuralNetworkDto;
+    result?: NeuralNetworkDto;
     model: ModelDto;
 };
 

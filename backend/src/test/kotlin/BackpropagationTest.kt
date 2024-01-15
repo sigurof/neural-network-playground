@@ -25,7 +25,7 @@ class BackpropagationTest : FreeSpec({
                 )
             val buildNetwork =
                 neuralNetworkBuilder
-                    .weightsAndBiases(
+                    .neuralNetworkOf(
                         doubleArrayOf(
                             0.0, 0.0, 0.0,
                             0.0, 0.0, 0.0

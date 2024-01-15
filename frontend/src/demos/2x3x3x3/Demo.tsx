@@ -6,7 +6,7 @@ import { Slider } from "@mui/material";
 import styled from "styled-components";
 import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
 import { range } from "../../common/utils/utils.ts";
-import { api, MatrixDto, TrainedNeuralNetworkDto } from "../../api/api.ts";
+import { api, CostUpdate, MatrixDto, TrainedNeuralNetworkDto } from "../../api/api.ts";
 
 const trainingData: TrainingData = circlesDataSets.nonLinear.redGreenBlue;
 const hiddenLayerDimensions = [3, 3];
@@ -41,11 +41,6 @@ const initialState: MatrixDto[] = weightsAndBiasesDimensions.map((dimensions) =>
         data: data,
     };
 });
-
-function castToStats(result: TrainedNeuralNetworkDto): { step: number; cost: number }[] {
-    const record: unknown = (result as { record: unknown }).record;
-    return record as { step: number; cost: number }[];
-}
 
 function castToSimpleNetworkLayer(data: TrainedNeuralNetworkDto): MatrixDto[] {
     // const layers = (data as { layers: unknown }).layers;
@@ -248,10 +243,10 @@ export const Demo = () => {
                         hiddenLayerDimensions,
                     });
                     const formData: MatrixDto[] = castToSimpleNetworkLayer(result);
-                    const statistics = castToStats(result);
+                    const costUpdates: CostUpdate[] = result.costUpdate;
                     chartUpdater.current!.update(
-                        statistics.map((stat) => {
-                            return { x: stat.step, y: stat.cost };
+                        costUpdates.map(({ step, cost }) => {
+                            return { x: step, y: cost };
                         }),
                     );
 

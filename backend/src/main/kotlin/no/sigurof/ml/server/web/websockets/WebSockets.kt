@@ -88,12 +88,19 @@ private suspend fun WebSocketServerSession.receiveNeuralNetworkUpdates(session: 
     NeuralNetworkBuilder(
         trainingData = MNIST.inputsVsOutputs(session.model.sizeDataSet),
         hiddenLayerDimensions = session.model.hiddenLayers
-    ).trainBackProp().collect { neuralNetwork ->
-        i++
-        val message = "Update $i of 60"
-        println("Sending '$message'")
-        sendServerEvent(ServerEvent.Update(message, neuralNetwork.toDto()))
-    }
+    ).trainBackProp()
+//        .catch { e -> println("Error: ${e.message}") }
+        .collect { neuralNetwork ->
+            try {
+                i++
+                val message = "Update $i of 60"
+                println("Sending '$message'")
+                sendServerEvent(ServerEvent.Update(message, neuralNetwork.toDto()))
+            } catch (e: Exception) {
+                println("Error: ${e.message}")
+                throw e
+            }
+        }
 }
 
 private suspend fun WebSocketServerSession.handleNewModel(event: ClientEvent.NewModel) {
@@ -101,14 +108,8 @@ private suspend fun WebSocketServerSession.handleNewModel(event: ClientEvent.New
     val sessions = nnSessions
     val sessionId = event.sessionId
     if (sessions[sessionId]?.model == null || event.override) {
-        // if model is new or override is true, set model and train
-        val populateWeightsAndBiasesRaw =
-            NeuralNetworkBuilder(
-                trainingData = MNIST.trainingData!!.labeledImages.map { it.toInputVsOutput() },
-                hiddenLayerDimensions = event.model.hiddenLayers
-            ).populateWeightsAndBiasesRaw { _ -> 0.0 }
         sessions[sessionId] =
-            NeuralNetworkServerClientSession.new(model = event.model, baseState = populateWeightsAndBiasesRaw)
+            NeuralNetworkServerClientSession.new(model = event.model, baseState = null)
         sessions[sessionId]?.let { session ->
             receiveNeuralNetworkUpdates(session)
         } ?: run {

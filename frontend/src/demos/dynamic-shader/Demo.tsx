@@ -8,7 +8,7 @@ import { chartInitialized, startChartJs } from "./ChartJsCode.ts";
 import { range } from "../../common/utils/utils.ts";
 import { RGBColor } from "./ColorGrid.tsx";
 import { circlesDataSets } from "./data3d.ts";
-import { api, MatrixDto, Record, TrainedNeuralNetworkDto } from "../../api/api.ts";
+import { api, MatrixDto, CostUpdate, TrainedNeuralNetworkDto } from "../../api/api.ts";
 
 const mlTrainingData: MLInputOutput[] = circlesDataSets.abc.redAndBlue;
 const circleData: CircleData[] = mlTrainingData.map((data) => {
@@ -337,7 +337,7 @@ export const Demo = () => {
                         hiddenLayerDimensions,
                     });
                     const formData: MatrixDto[] = castToSimpleNetworkLayer(result);
-                    const statistics: Record[] = castToStats(result);
+                    const statistics: CostUpdate[] = castToStats(result);
                     handleFormChange(formData);
                     chartUpdater.current!.updateChart(
                         statistics.map((stat) => {

@@ -41,16 +41,22 @@ export class NeuralNetwork {
     }
 
     evaluateCost(testingData: InputVsOutput[]) {
-        return testingData
-            .map((testExample) => {
-                const activations = this.evaluateActivations(testExample.input);
-                const outputActivations = activations[activations.length - 1];
-                const squaredError = testExample.output.map((expectedOutput, i) => {
-                    const actualOutput = outputActivations[i];
-                    return (expectedOutput - actualOutput) ** 2;
-                });
-                return squaredError.reduce((a, b) => a + b, 0);
-            })
-            .reduce((a, b) => a + b, 0);
+        const squaredErrors = testingData.map((testExample) => {
+            const activations = this.evaluateActivations(testExample.input);
+            const outputActivations = activations[activations.length - 1];
+            const squaredError = testExample.output.map((expectedOutput, i) => {
+                const actualOutput = outputActivations[i];
+                return (expectedOutput - actualOutput) ** 2;
+            });
+            return squaredError.reduce((a, b) => a + b, 0);
+        });
+        const sum = squaredErrors.reduce((a, b) => a + b, 0);
+
+        const number = sum / testingData.length;
+        if (Number.isNaN(number)) {
+            console.log("NaN");
+            throw new Error("NaN");
+        }
+        return number;
     }
 }

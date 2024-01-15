@@ -17,6 +17,7 @@ import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import kotlinx.serialization.Serializable
 import no.sigurof.ml.datasets.MNIST
+import no.sigurof.ml.neuralnetwork.CostUpdate
 import no.sigurof.ml.neuralnetwork.InputVsOutput
 import no.sigurof.ml.neuralnetwork.NeuralNetwork
 import no.sigurof.ml.neuralnetwork.NeuralNetworkBuilder
@@ -32,7 +33,7 @@ import no.sigurof.ml.server.web.common.toDto
 class SessionDto(
     var id: String,
     var progress: Int,
-    var result: NeuralNetworkDto,
+    var result: NeuralNetworkDto?,
     var model: Model? = null,
 )
 
@@ -40,7 +41,7 @@ fun Map.Entry<String, NeuralNetworkServerClientSession>.toDto() =
     SessionDto(
         id = this.key,
         progress = this.value.progress,
-        result = this.value.result.toDto(),
+        result = this.value.result?.toDto(),
         model = this.value.model
     )
 
@@ -59,12 +60,31 @@ fun Route.restRoutes() {
     post("/ml/network") {
         val inNeuralNetwork: InNeuralNetwork = call.receive<InNeuralNetwork>()
         val shouldRecordCostFunction = call.request.queryParameters["recordCostFunction"]?.toBoolean() ?: false
-        val trainingResult: NeuralNetworkBuilder.TrainingResult =
+        val record = mutableListOf<CostUpdate>()
+        val neuralNetwork: NeuralNetwork =
             NeuralNetworkBuilder(
                 trainingData = inNeuralNetwork.trainingData,
                 hiddenLayerDimensions = inNeuralNetwork.hiddenLayerDimensions
             )
-                .trainNew(shouldRecordCostFunction)
+                .train { step, neuralNetwork ->
+                    if (step % 50 == 0) {
+                        val calculateCostFunction = neuralNetwork.calculateCostFunction(inNeuralNetwork.trainingData)
+                        println(
+                            "Step: $step, Cost: $calculateCostFunction"
+                        )
+                        record.add(
+                            CostUpdate(
+                                step = step,
+                                cost = calculateCostFunction
+                            )
+                        )
+                    }
+                }
+        val trainingResult: NeuralNetworkBuilder.TrainingResult =
+            NeuralNetworkBuilder.TrainingResult(
+                neuralNetwork = neuralNetwork,
+                costUpdate = record
+            )
         val trainedNeuralNetwork: TrainedNeuralNetworkDto = trainingResult.toDto()
         call.respond(trainedNeuralNetwork)
     }
@@ -117,7 +137,7 @@ fun Route.restRoutes() {
 private fun NeuralNetworkBuilder.TrainingResult.toDto(): TrainedNeuralNetworkDto {
     return TrainedNeuralNetworkDto(
         neuralNetwork = neuralNetwork.toDto(),
-        record = record
+        costUpdate = costUpdate
     )
 }
 

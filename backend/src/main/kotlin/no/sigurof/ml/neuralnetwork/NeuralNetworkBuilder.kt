@@ -4,7 +4,9 @@ import kotlin.math.sin
 import kotlin.random.Random
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import no.sigurof.ml.neuralnetwork.backpropagation.BackPropagation
 import no.sigurof.ml.neuralnetwork.backpropagation.GradientDescent
@@ -31,7 +33,7 @@ class NeuralNetworkConnectionSpec(
 }
 
 @Serializable
-class Record(
+class CostUpdate(
     val step: Int,
     val cost: Double,
 )
@@ -55,32 +57,30 @@ class NeuralNetworkBuilder(
     private val trainingDataChunks: List<List<InputVsOutput>> = trainingData.chunked(100)
 
     fun populateWeightsAndBiasesRaw(initMethod: (Int) -> Double) =
-        NeuralNetwork.populate(
+        NeuralNetwork(
             networkConnectionsIn = connections,
             initMethod = initMethod
         )
 
     class TrainingResult(
         val neuralNetwork: NeuralNetwork,
-        val record: List<Record>,
+        val costUpdate: List<CostUpdate>,
     )
 
+    // coroutine function that returns 1
+
     fun trainBackProp(): Flow<NeuralNetwork> =
-        flow {
-            while (true) {
-                delay(1000)
-                emit(populateWeightsAndBiasesRaw { 2.0 * Random.nextDouble() - 1.0 })
+        trainCoroutine()
+            .filter { (step, coordinate) -> step % 30 == 0 }
+            .map { (step, coordinate) ->
+                val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
+                neuralNetworkOf(coordinate)
             }
-        }
 
-    fun trainNew(recordCostFunction: Boolean = false): TrainingResult =
-        train(recordCostFunction = recordCostFunction, gradientFunction = BackPropagation::calculateGradient)
-
-    fun trainOld(recordCostFunction: Boolean = false): TrainingResult =
-        train(
-            recordCostFunction = recordCostFunction,
-            ::calculateSimpleGradient
-        )
+    fun trainBackPropMock(): Flow<NeuralNetwork> =
+        trainMock2()
+            .filter { (step, neural) -> step % 30 == 0 }
+            .map { (step, neural) -> neuralNetworkOf(neural) }
 
     fun calculateSimpleGradient(
         neuralNetwork: NeuralNetwork,
@@ -91,71 +91,53 @@ class NeuralNetworkBuilder(
         val derivative = DoubleArray(dimensionality) { 10.0 }
         for (index in 0 until dimensionality) {
             val pointIncr = neuralNetwork.data.increment(index, delta)
-            val functionValueIncr = weightsAndBiases(pointIncr).calculateCostFunction(trainingDataChunk)
+            val functionValueIncr = neuralNetworkOf(pointIncr).calculateCostFunction(trainingDataChunk)
             derivative[index] = (functionValueIncr - functionValue) / delta
         }
         return derivative
     }
 
-    private fun train(
-        recordCostFunction: Boolean = false,
-//        iterationCallback: (step: Int, coordinate: DoubleArray, functionValue: Double) -> Unit,
-        gradientFunction: (NeuralNetwork, List<InputVsOutput>) -> DoubleArray,
-    ): TrainingResult {
-        val record = mutableListOf<Record>()
-
-        var trainingDataChunk: List<InputVsOutput> = trainingDataChunks.first()
-        val iterationCallback: (step: Int, coordinate: DoubleArray, functionValue: Double) -> Unit =
-            { step, coordinate, _ ->
-                if (recordCostFunction && step % 50 == 0) {
-                    val cost = weightsAndBiases(coordinate).calculateCostFunction(trainingDataChunk)
-                    record.add(Record(step = step, cost = cost))
-                }
+    private fun trainMock2(): Flow<Pair<Int, DoubleArray>> =
+        GradientDescent.minimizeMock(
+            startingCoordinate = DoubleArray(dimensionality) { Random.nextDouble(-1.0, 1.0) },
+            gradientFunction = { step, coordinate ->
+                DoubleArray(dimensionality) { Random.nextDouble(-1.0, 1.0) }
             }
+        )
+
+    private fun trainCoroutine(): Flow<Pair<Int, DoubleArray>> =
+        GradientDescent.minimizeCoroutine(
+            learningRate = 10.0,
+            startingCoordinate = DoubleArray(dimensionality) { Random.nextDouble(-1.0, 1.0) },
+            gradientFunction = { step, weightsVector ->
+                val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
+                BackPropagation.calculateGradient(neuralNetworkOf(weightsVector), trainingDataChunk)
+            }
+        )
+
+    fun train(iterationCallback: (step: Int, network: NeuralNetwork) -> Unit): NeuralNetwork {
         val costFunctionMin =
             GradientDescent.minimize(
-                learningRate = 10.0,
+                learningRate = 30.0,
                 startingCoordinate = DoubleArray(dimensionality) { Random.nextDouble(-1.0, 1.0) },
                 gradientFunction = { step, weightsVector ->
-                    trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
-                    gradientFunction(weightsAndBiases(weightsVector), trainingDataChunk)
+                    val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
+                    BackPropagation.calculateGradient(neuralNetworkOf(weightsVector), trainingDataChunk)
                 },
                 iterationCallback = { step, coordinate, _ ->
-                    if (recordCostFunction && step % 50 == 0) {
-                        val cost = weightsAndBiases(coordinate).calculateCostFunction(trainingDataChunk)
-                        record.add(Record(step = step, cost = cost))
-                    }
+                    val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
+                    val weightsAndBiases = neuralNetworkOf(coordinate)
+                    iterationCallback.invoke(step, weightsAndBiases)
                 }
             )
-        return TrainingResult(
-            neuralNetwork = weightsAndBiases(costFunctionMin),
-            record = record
-        )
+        return neuralNetworkOf(costFunctionMin)
     }
 
-    fun weightsAndBiases(data: DoubleArray) =
+    fun neuralNetworkOf(data: DoubleArray) =
         NeuralNetwork(
             data = data,
             networkConnectionsIn = connections
         )
-
-    fun trainNew2(iterationCallback: (step: Int, network: NeuralNetwork) -> Unit): NeuralNetwork {
-        val costFunctionMin =
-            GradientDescent.minimize(
-                learningRate = 10.0,
-                startingCoordinate = DoubleArray(dimensionality) { Random.nextDouble(-1.0, 1.0) },
-                gradientFunction = { step, weightsVector ->
-                    val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
-                    BackPropagation.calculateGradient(weightsAndBiases(weightsVector), trainingDataChunk)
-                },
-                iterationCallback = { step, coordinate, _ ->
-                    val trainingDataChunk = trainingDataChunks[step % trainingDataChunks.size]
-                    val weightsAndBiases = weightsAndBiases(coordinate)
-                    iterationCallback.invoke(step, weightsAndBiases)
-                }
-            )
-        return weightsAndBiases(costFunctionMin)
-    }
 }
 
 fun trainNetworkMock(startI: Int): Flow<Pair<Int, Double>> =
