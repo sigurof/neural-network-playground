@@ -1,8 +1,8 @@
 # Neural Networks 101
 
-This hobby project is a server/client application that trains a neural network against a dataset, and displays a live view of the current loss function in the UI.
+This was a fun little hobby project I worked on during Christmas 2023. I was inspired by the recent advances in AI and by the amazing tutorials/coding adventures of [Sebastian Lague](https://www.youtube.com/watch?v=hfMk-kjRv4c) to try my hand at implementing one of the most foundational exercises in AI myself – with a twist; as a systems developer and maths nerd I set some constraints for myself that may seem quite unnatural for any AI/ML engineer:
+1. deduce the full equation for backpropagation through my own, independent mathematical reasoning and pen/paper - if you talk with me over a beer you might be unlucky enough to get the full recounting of it 🍻
+2. Test out websockets and async web UIs
+3. hone my Kotlin and Typescript skills
 
-Implemented using React/Kotlin + websockets.
-
-If I were to flex one thing from this project it would be that I deduced backpropagation from scratch by pen and paper, and then implemented it by myself in code - no pre-made python libraries used or referenced :P 
-Backpropagation is actually super simple from a mathematical point of view: it's just differentiating a function (the loss function) with respect to its parameters (weights and biases). In code you produce the derivatives by walking the neural network backwards while making sure to reuse as much information as possible between subsequent calculations.
+I ended up making a server/client application that trains a neural network against a dataset, and displays a live view of the current loss function in the UI.
